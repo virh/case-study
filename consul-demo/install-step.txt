@@ -1,0 +1,31 @@
+#install zip unzip
+yum install -y unzip zip
+#install consul
+unzip consul_1.1.0_linux_amd64.zip
+chmod 777 consul
+mv consul /usr/bin/
+
+#install dig command
+yum -y install bind-utils
+
+kill -s SIGHUP agent_pid
+
+#install vagrant
+rpm -ivh vagrant_2.1.1_x86_64.rpm
+
+#install virtualbox
+#Create the repository config file /etc/yum.repos.d/virtualbox.repo:
+[virtualbox]
+name=VirtualBox
+baseurl=http://download.virtualbox.org/virtualbox/rpm/el/$releasever/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=http://download.virtualbox.org/virtualbox/debian/oracle_vbox.asc
+#Install VirtualBox-5.2 rpm package:
+# yum install VirtualBox-5.2
+sudo /usr/lib/virtualbox/vboxdrv.sh setup
+yum install gcc
+rpm install ftp://mirror.switch.ch/pool/4/mirror/scientificlinux/7.2/x86_64/updates/security/kernel-devel-3.10.0-693.el7.x86_64.rpm
+
+#install rsync
+yum -y install rsync
