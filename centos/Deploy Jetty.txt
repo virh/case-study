@@ -1,0 +1,76 @@
+// all software upload to /root
+
+1.java install
+tar -xzvf server-jre-8u152-linux-x64.tar.gz
+mv jdk1.8.0_152 /usr/local/java
+
+vi /etc/profile
+#JAVA_HOME=/usr/lib/java
+#JRE_HOME=$JAVA_HOME/jre
+#CLASS_PATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib
+#PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
+#export JAVA_HOME JRE_HOME CLASS_PATH PATH
+
+export JAVA_HOME=/usr/lib/java
+export PATH=$JAVA_HOME/bin:$PATH
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+
+source /etc/profile
+
+2.jetty install
+tar -xzvf jetty-distribution-9.4.7.v20170914.tar.gz
+mv jetty-distribution-9.4.7.v20170914 /usr/local/jetty
+export JETTY_HOME=/usr/local/jetty
+export PATH=$JETTY_HOME/bin:$PATH
+
+# close firewall
+systemctl stop firewalld.service
+
+3.mysql install
+yum localinstall mysql57-community-release-el7-11.noarch.rpm
+yum repolist enabled | grep "mysql.-community."
+#vim /etc/yum.repos.d/mysql-community.repo
+yum install mysql-community-server
+systemctl start mysqld
+systemctl status mysqld
+# start reboot
+systemctl enable mysqld 
+systemctl daemon-reload
+
+grep 'temporary password' /var/log/mysqld.log
+#replace rnu7=jSy6w8a by /var/log/mysqld.log tip root@localhost:%s
+mysql -uroot -p
+
+set global validate_password_policy=0;
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'rootroot';
+select @@validate_password_length;
+#GRANT ALL PRIVILEGES ON . TO 'test'@'%' IDENTIFIED BY 'test' WITH GRANT OPTION; 
+#grant all privileges on *.* to 'root'@'%';
+
+use mysql; 
+update user set host = '%' where user = 'root'; 
+flush privileges;
+
+UPDATE mysql.user
+    SET authentication_string = PASSWORD('rootroot'), password_expired = 'N',
+	Grant_priv = 'Y', Super_priv = 'Y'
+    WHERE User = 'root' AND Host = 'localhost';
+FLUSH PRIVILEGES;
+GRANT ALL ON *.* TO 'root'@'localhost';
+
+CREATE DATABASE IF NOT EXISTS rba_db DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+use rba_db;
+source /root/schema_rba.sql;
+
+4.deploy
+cd $JETTY_HOME
+cp -r demo-base rba-base
+rm -rf rba-base/webapps/*
+mv /root/rba-authn.war $JETTY_HOME/rba-base/webapps/
+mv /root/new-frontend $JETTY_HOME/rba-base/webapps/ROOT/
+cd rba-base
+java -jar $JETTY_HOME/start.jar
+
+nohup java -jar $JETTY_HOME/start.jar >/dev/null  & 
+
+nohup java -jar xx.jar >/dev/null  & 
