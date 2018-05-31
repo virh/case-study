@@ -1,0 +1,56 @@
+yum install ansible
+
+# 1. ansible ssh server without password
+ssh-keygen -t rsa
+scp .ssh/id_rsa.pub root@192.168.238.130:/root/
+
+# 2. in 130 machine
+mkdir .ssh
+touch ~/.ssh/authorized_keys
+cat id_rsa.pub >> ~/.ssh/authorized_keys
+
+# 3. ansible test
+ansible all -m ping
+ansible all -a "/bin/echo hello"
+
+# playbook [mysql login retrieve databases info]
+
+# mysql-login.yml
+- hosts: mysql
+  gather_facts: no
+  remote_user: root
+  tasks:
+- name: Retrieve databases from mysql
+  command: >
+    mysql --user=root --password=rootroot 
+    	--execute="show databases;"
+  register: databases
+  always_run: True
+  changed_when: False
+
+- name: Do something with databases
+  debug: var=databases.stdout_lines
+
+
+
+mysql --user=root --password=rootroot --execute="show database;"
+
+
+# install pexpect every node
+download https://bootstrap.pypa.io/get-pip.py
+python get-pip.py
+pip install pexpect-4.3.1-py2.py3-none-any.whl
+
+
+# update-pwd.yml
+---
+- hosts: all
+  gather_facts: no
+  remote_user: root
+  
+  tasks:
+    - name: Case insensitve password string match
+      expect:
+        command: passwd root
+        responses:
+           (?i)password: "virgil"

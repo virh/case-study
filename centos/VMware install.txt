@@ -1,0 +1,22 @@
+1.sudo apt-get install ssh
+2.sudo apt-get install vsftpd
+3.vi /etc/vsftpd.conf
+write_enable=YES
+4.service vsftpd restart
+
+
+==
+vi /etc/sysconfig/network-scripts/ifcfg-ens33
+BOOTPROTO=none
+ONBOOT=yes
+IPADDR = 192.168.238.129 
+GATEWAY = 190.168.238.2
+DNS1 = 222.186.160.70
+DNS2 = 114.114.114.114
+
+service network restart
+yum install net-tools             [Provides ifconfig utility]
+
+vi /etc/ssh/sshd_config
+# PermitRootLogin yes (Original) 
+PermitRootLogin yes (Now)

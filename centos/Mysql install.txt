@@ -1,0 +1,25 @@
+#mysql server
+yum localinstall mysql57-community-release-el7-11.noarch.rpm
+yum repolist enabled | grep "mysql.-community."
+#vim /etc/yum.repos.d/mysql-community.repo
+yum install mysql-community-server
+systemctl start mysqld
+systemctl status mysqld
+# start reboot
+systemctl enable mysqld 
+systemctl daemon-reload
+
+grep 'temporary password' /var/log/mysqld.log
+#replace rnu7=jSy6w8a by /var/log/mysqld.log tip root@localhost:%s
+mysql -uroot -p
+set global validate_password_policy=0;
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'rootroot';
+
+#mysql shell
+yum install mysql-shell
+
+#mysql router
+yum install mysql-router
+
+#install X plugin
+mysqlsh -u root -h localhost -p --classic --dba enableXProtocol

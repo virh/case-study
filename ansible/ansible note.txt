@@ -1,0 +1,141 @@
+1.become module - play task with other user 
+2.inventory order - inventory(default),  reverse_inventory, sorted, reverse_sorted, shuffle(random)
+3.long line - break it on a space and indent any continuation lines
+4.the playbook layout
+	---
+	- hosts: webservers
+	  vars:
+	    http_port: 80
+	    max_clients: 200
+	  remote_user: root
+	  tasks:
+	  - name: ensure apache is at the lastest version
+	    yum: name=httpd state=latest
+	  - name: ...
+	    template: ...
+5.notify - called handlers
+ eg.
+ // normal tasks
+ - name: template configuration file
+   template: src=template.j2 desc=/etc/foo.conf
+   notify:
+      - restart memcached
+      - restart apache
+  // handlers
+  - name: restart memcached
+    service: name=memcached state=restarted
+  - name: restart apache
+    service: name=apache state=restarted
+    
+6.handlers listen - decouple handlers from their names (execute order as the file been defined not care the notify-statement order)
+  eg.
+  // handlers
+  - name: restart memcached
+    service: name=memcached state=restarted
+    listen: "restart web services"
+  - name: restart apache
+    service: name=apache state=restarted
+    listen: "restart web services"
+  // tasks
+  - name: restart everything
+    command: echo "this task will restart the web services"
+    notify: "restart web services"
+    
+7.syntax check with --syntax-check
+8.detail output with --verbose
+9.see hosts with --list-hosts
+    
+10.import - static task, pre-processed during playbook parsing time, copied to all child tasks
+     limit:can't use loop
+           when using variables for the target file and role name,variables from inventory sources(host/group vars, etc.) can not be used
+11.incule - dynamic task, processed during runtime, only apply to the dynamic task not be copied to child tasks
+     limit:dynamic tags will not be seen with --list-tags
+           dynamic tasks will not be seen with --list-tasks
+           can't notify to trigger handler task(exclude trigger the dynamic include itslef, which would result in all tasks within the include being run)
+           can't use --start-at-task to begin execution a task
+
+12.roles - can be a simple name, or can be a fully qualified path
+	eg.
+	// for path
+	- hosts: webservers 
+	  roles:
+	   - {role: '/path/to/my/roles/common'}
+	
+	// with parameters
+	- hosts: webservers
+	  roles:
+	    - common
+	    - {role: foo_app_instance, dir: '/opt/a', app_port:5000}
+	    - {role: foo_app_instance, dir: '/opt/b', app_port:5001}
+	 
+	 // with conditionally
+	 - hosts: webservers
+	   task:
+	   - include_role:
+	       name: some_role
+	     when: "ansible_os_family == 'RedHat'" 
+	     
+	  // with tags
+	  -hosts: webservers
+	   roles:
+	     - { role: foo, tags: ["bar", "baz"] }
+	  
+	  // or
+	  - hosts: webservers
+	    tasks:
+	    - import_role:
+	    		name: foo
+	    	tags:
+	    	-bar
+	    	-baz  
+	    	
+	  // duplication with different parameters
+		- hosts: webservers
+		  roles:
+		  - { role: foo, message: "first" }
+		  - { role: foo, message: "second" }
+	  
+	  // duplication set allow_duplicates:true
+		# playbook.yml
+		---
+		- hosts: webservers
+		  roles:
+		  - foo
+		  - foo
+
+		# roles/foo/meta/main.yml
+		---
+		allow_duplicates: true
+		
+13.role default variables config in "defaults/main.yml"
+14.role dependencies (execute only once exclude the config allow_duplicates set to true)
+		# meta/main.yml
+		---
+		dependencies:
+		  - { role: common, some_parameter: 3 }
+		  - { role: apache, apache_port: 80 }
+		  - { role: postgres, dbname: blarg, other_parameter: 12 }
+
+15.embedding modules and plugins in roles
+		# moudles in roles "library" directory by itslef
+		roles/
+	   my_custom_modules/
+	       library/
+	          module1
+	          module2	 
+	   # other modules can use it after it execute
+	   - hosts: webservers
+		  roles:
+		    - my_custom_modules
+		    - some_other_role_using_my_custom_modules
+		    - yet_another_role_using_my_custom_modules
+		 # same plugins be used like moudles
+		 roles/
+		   my_custom_filter/
+		       filter_plugins
+		          filter1
+		          filter2
+		          
+16.role search path in "roles/", or default "/etc/ansible/roles"
+
+17.vars like "{{ item }}"
