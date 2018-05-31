@@ -1,0 +1,9 @@
+---
+- hosts: mysql
+  remote_user: root
+  gather_facts: no
+  tasks:
+    - name: test connection
+      command: echo hello
+      register: echo
+    - debug: var=echo

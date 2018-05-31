@@ -1,0 +1,11 @@
+---
+- hosts: all
+  gather_facts: no
+  remote_user: root
+  
+  tasks:
+    - name: Case insensitve password string match
+      expect:
+        command: passwd root
+        responses:
+           (?i)password: "virgil"

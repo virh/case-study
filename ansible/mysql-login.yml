@@ -1,0 +1,13 @@
+- hosts: mysql
+  gather_facts: no
+  remote_user: root
+  tasks:
+    - name: Retrieve databases from mysql
+      command: >
+        mysql --user=root --password=rootroot --execute="show databases;"
+      register: databases
+      check_mode: no
+      changed_when: False
+
+    - name: Do something with databases
+      debug: var=databases.stdout_lines

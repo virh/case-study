@@ -1,0 +1,18 @@
+# mysql-login-2.yml
+- hosts: all
+  gather_facts: no
+  remote_user: root
+
+  tasks:
+    - name: Retrieve databases from mysql
+      expect:
+        command: mysql -u root -p
+        responses: 
+          (?i)password: "rootroot"
+          mysql\>: ["show databases;","exit"]
+        echo: true
+        timeout: 5
+      register: databases
+
+    - name: Display databases info
+      debug: var=databases
