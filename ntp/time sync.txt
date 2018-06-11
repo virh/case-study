@@ -1,0 +1,20 @@
+#hardware time sync
+hwclock --hctosys 
+hwclock -s
+
+#system time sync
+hwclock --systohc <== sys（系统时间）to（写到）hc（Hard Clock）
+hwclock -w
+
+
+#ntp install
+sudo yum install ntp
+sudo systemctl start ntpd
+sudo systemctl enable ntpd
+sudo systemctl restart ntpd
+# after a few minutes, check the health of ther time server
+ntpq -p 
+# another host verify the time server  
+ntpdate -q your_server_ip
+# update the system time from the time server
+ntpdate your_server_ip

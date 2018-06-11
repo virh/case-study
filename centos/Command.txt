@@ -1,0 +1,4 @@
+#kernel query
+uname -a
+uname -r 
+cat /proc/version

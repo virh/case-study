@@ -1,0 +1,16 @@
+yum install keepalived
+echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+#/etc/sysctl.conf
+net.ipv4.ip_forward = 1
+net.ipv4.conf.ens33.arp_announce = 2
+net.ipv4.conf.ens33.arp_ignore = 1
+
+#firewall [must start firewalll for port forward]
+firewall-cmd --direct --permanent --add-rule ipv4 filter INPUT 0 --in-interface ens33 --destination 224.0.0.18 --protocol vrrp -j ACCEPT
+firewall-cmd --direct --permanent --add-rule ipv4 filter OUTPUT --out-interface enp0s8 --destination 224.0.0.18 --protocol vrrp -j ACCEPT
+firewall-cmd --reload
+
+#
+systemctl enable keepalived
+systemctl start keepalived
+systemctl reload keepalived
