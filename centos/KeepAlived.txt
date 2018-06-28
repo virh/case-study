@@ -7,10 +7,16 @@ net.ipv4.conf.ens33.arp_ignore = 1
 
 #firewall [must start firewalll for port forward]
 firewall-cmd --direct --permanent --add-rule ipv4 filter INPUT 0 --in-interface ens33 --destination 224.0.0.18 --protocol vrrp -j ACCEPT
-firewall-cmd --direct --permanent --add-rule ipv4 filter OUTPUT --out-interface enp0s8 --destination 224.0.0.18 --protocol vrrp -j ACCEPT
+firewall-cmd --direct --permanent --add-rule ipv4 filter OUTPUT 0 --out-interface ens33 --destination 224.0.0.18 --protocol vrrp -j ACCEPT
 firewall-cmd --reload
 
 #
 systemctl enable keepalived
 systemctl start keepalived
 systemctl reload keepalived
+
+
+#
+firewall-cmd --permanent --add-port=100/tcp
+firewall-cmd --reload
+firewall-cmd --list-ports
