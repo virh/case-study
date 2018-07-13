@@ -23,3 +23,12 @@ yum install mysql-router
 
 #install X plugin
 mysqlsh -u root -h localhost -p --classic --dba enableXProtocol
+
+#mysql config file location
+/etc/my.cnf»ò/usr/share/mysql/my.cnf
+
+# on master db
+mysql> set global validate_password_policy=0;
+mysql> CREATE USER 'repl'@'%' IDENTIFIED BY 'password';
+mysql> GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
+
