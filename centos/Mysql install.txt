@@ -24,11 +24,47 @@ yum install mysql-router
 #install X plugin
 mysqlsh -u root -h localhost -p --classic --dba enableXProtocol
 
-#mysql config file location
+# mysql config file location
 /etc/my.cnf»ò/usr/share/mysql/my.cnf
+
+# setting master configuration
+[mysqld]
+log-bin=mysql-bin
+server-id=1
+
+# setting replication slave configuration
+[mysqld]
+server-id=2
 
 # on master db
 mysql> set global validate_password_policy=0;
-mysql> CREATE USER 'repl'@'%' IDENTIFIED BY 'password';
-mysql> GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
+mysql> CREATE USER 'rep1'@'%' IDENTIFIED BY 'password';
+mysql> GRANT REPLICATION SLAVE ON *.* TO 'rep1'@'%';
 
+# block write statements
+mysql> FLUSH TABLES WITH READ LOCK;
+mysql > SHOW MASTER STATUS;
+
+#copy data
+shell> mysqldump --all-databases --master-data > dbdump.db
+
+#copy data using raw data files
+shell> mysqladmin shutdown
+shell> tar cfP /tmp/db.tar /var/lib/mysql
+shell> zip -r /tmp/db.zip /var/lib/mysql
+shell> rsync --recursive /var/lib/mysql /tmp/dbdata
+
+# release table lock
+mysql> UNLOCK TABLES;
+
+# setting the master configuration on the slave
+# rep1 & rep2
+mysql> CHANGE MASTER TO MASTER_HOST='192.168.238.130',MASTER_USER='rep1',MASTER_PASSWORD='password',MASTER_LOG_FILE='mysql-bin.000003',MASTER_LOG_POS=154;
+STOP SLAVE; -- if replication was running
+CHANGE MASTER TO MASTER_PASSWORD='new3cret';
+START SLAVE; -- if you want to restart replication
+
+# create test table
+create table testdb (id bigint not null, primary key(id)) engine=innodb;
+
+# drop test table
