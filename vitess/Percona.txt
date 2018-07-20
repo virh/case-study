@@ -1,0 +1,6 @@
+# install repository 
+yum install http://www.percona.com/downloads/percona-release/redhat/0.1-6/percona-release-0.1-6.noarch.rpm
+yum list | grep percona
+
+# install
+yum install percona-toolkit
