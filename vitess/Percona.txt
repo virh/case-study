@@ -4,3 +4,10 @@ yum list | grep percona
 
 # install
 yum install percona-toolkit
+
+# cat /proc/loadavg
+前三个值分别代表系统5分钟、10分钟、15分钟前的平均负载
+
+第四个值的分子是正在运行的进程数，分母为总进程数
+
+第五个值是最近运行的进程id

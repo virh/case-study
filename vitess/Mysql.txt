@@ -2,3 +2,12 @@
 2.think about code paths that can read from a replica, this will let you to scale your reads by just adding more replicas.
 3.avoid complicated data relationships.
 4.avoid pushing too much logic into the database in the form of stored procedures,foreign keys, or triggers.such operations overly tax the database and hinder scaling.
+
+
+
+Make sure your configuration limits are high enough to work when servers are out of
+the pool. For example, if you find that each MySQL server typically has 100 connections,
+you should set max_connections to 200 on each server in the pool. Then, even if
+Load Balancing | 563
+half the servers fail, the pool should be able to handle the same number of connections
+as a whole.
