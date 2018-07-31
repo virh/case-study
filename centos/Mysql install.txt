@@ -74,3 +74,22 @@ drop table testdb;
 
 # replication
 This brings us to rule number one ¨C if you care about replication latency you must not have any long running updates. Queries or transactions containing multiple update queries which add up to long time. I would keep the maximum query length at about 1/5th of the maximum replication lag you¡¯re ready to tolerate. So if you want your replica to be no more than 1 minute behind keep the longest update query to 10 sec or so. This is of course rule of thumb depending on differences in master/slave configuration, their load and concurrency you may need to keep the ratio higher or allow a bit longer queries.
+
+# execute after delete user
+REVOKE ALL PRIVILEGES,GRANT OPTION FROM orchestrator;
+flush privileges; 
+
+
+# special db replication
+STOP SLAVE SQL_THREAD;
+CHANGE REPLICATION FILTER REPLICATE_DO_DB=(db1);
+START SLAVE SQL_THREAD;
+
+# show table status 
+# show tables [from db]
+# show columns from [db.]table
+
+# insert into mytest;
+insert into testdb(id) values ('1');
+# insert into mytest2;
+insert into testdb2(id) values ('1');
