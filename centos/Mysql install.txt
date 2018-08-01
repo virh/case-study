@@ -48,6 +48,9 @@ mysql > SHOW MASTER STATUS;
 #copy data
 shell> mysqldump --all-databases --master-data > dbdump.db
 
+#import data
+mysql -p<dbdump.db;
+
 #copy data using raw data files
 shell> mysqladmin shutdown
 shell> tar cfP /tmp/db.tar /var/lib/mysql
@@ -93,3 +96,30 @@ START SLAVE SQL_THREAD;
 insert into testdb(id) values ('1');
 # insert into mytest2;
 insert into testdb2(id) values ('1');
+
+
+# update mysql password
+update mysql.user set authentication_string=password('orch_topology_password');
+
+# create application user
+CREATE USER 'app'@'%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON mytest.* TO 'app'@'%';
+GRANT ALL PRIVILEGES ON mytest2.* TO 'app'@'%';
+FLUSH PRIVILEGES;
+
+
+# readonly
+SET GLOBAL read_only=ON;
+select @@global.log_slave_updates;
+# log slave updates
+[mysqld]
+log-slave-updates=true
+
+select @@global.log_slave_updates;
+
+show global variables like '%slave%';
+
+# show binlog events
+show binlog events 'mysql-bin.000004' from 154;
+
+gtid-mode=ON to my.cnf
