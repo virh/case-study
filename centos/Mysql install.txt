@@ -110,6 +110,7 @@ FLUSH PRIVILEGES;
 
 # readonly
 SET GLOBAL read_only=ON;
+select @@global.read_only; //1 @@global.super_read_only
 select @@global.log_slave_updates;
 # log slave updates
 [mysqld]
@@ -123,3 +124,10 @@ show global variables like '%slave%';
 show binlog events 'mysql-bin.000004' from 154;
 
 gtid-mode=ON to my.cnf
+
+
+# orchestrator
+orchestrator -c which-cluster -i some.instance.in.cluster
+
+#
+orchestrator -c which-replicas -i $master | shuf | head -1
