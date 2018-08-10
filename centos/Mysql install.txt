@@ -131,3 +131,17 @@ orchestrator -c which-cluster -i some.instance.in.cluster
 
 #
 orchestrator -c which-replicas -i $master | shuf | head -1
+
+#
+orchestrator -c graceful-master-takeover -alias mycluster
+orchestrator -c force-master-failover -alias mycluster
+
+# reset
+show global variables like '%gtid%'\G
+set @@global.gtid_purged=''
+
+
+#
+set global validate_password_length=6;
+SHOW VARIABLES LIKE 'validate_password%';
+CREATE USER 'monitor'@'%' IDENTIFIED BY 'monitor';
