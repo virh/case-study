@@ -127,6 +127,8 @@ gtid-mode=ON to my.cnf
 
 
 # orchestrator
+cd /usr/local/orchestrator && ./orchestrator --debug --stack http
+
 orchestrator -c which-cluster -i some.instance.in.cluster
 
 #
@@ -145,3 +147,104 @@ set @@global.gtid_purged=''
 set global validate_password_length=6;
 SHOW VARIABLES LIKE 'validate_password%';
 CREATE USER 'monitor'@'%' IDENTIFIED BY 'monitor';
+
+CREATE USER 'msandbox'@'%' IDENTIFIED BY 'msandbox';
+GRANT ALL PRIVILEGES ON mytest.* TO 'msandbox'@'%';
+GRANT ALL PRIVILEGES ON mytest2.* TO 'msandbox'@'%';
+FLUSH PRIVILEGES;
+
+/etc/orchestrator.conf.json, conf/orchestrator.conf.json, orchestrator.conf.json
+
+
+proxysql --reload
+mysql -u admin -padmin -h 127.0.0.1 -P6032 --prompt='Admin> '
+Admin> SHOW DATABASES;
+Admin> SELECT * FROM mysql_servers;
+Admin> SELECT * from mysql_replication_hostgroups;
+Admin> SELECT * from mysql_query_rules;
+Admin> SELECT * FROM stats.stats_mysql_connection_pool;
+
+Admin> INSERT INTO mysql_replication_hostgroups VALUES (1,2,'cluster1');
+INSERT INTO mysql_query_rules (rule_id,active,match_digest,destination_hostgroup,apply)
+VALUES
+(1,1,'^SELECT COUNT\(\*\)',2,1);
+
+Admin> SELECT hostgroup hg, SUM(sum_time), SUM(count_star) FROM stats_mysql_query_digest GROUP BY hostgroup;
+
+
+reset
+SELECT * FROM stats_mysql_query_digest_reset LIMIT 1;
+
+Admin> SELECT match_digest,destination_hostgroup FROM mysql_query_rules WHERE active=1 AND username='msandbox' ORDER BY rule_id;
+Admin> SELECT hostgroup hg, sum_time, count_star, digest_text FROM stats_mysql_query_digest ORDER BY sum_time DESC;
+
+Orchestrator & proxysql
+
+"ApplyMySQLPromotionAfterMasterFailover": true,
+"PreGracefulTakeoverProcesses": [
+  "/tmp/prefailover.sh"
+],
+"PostMasterFailoverProcesses": [
+  "/tmp/postfailover.sh"
+]
+
+#############################
+###### /tmp/prefialover.sh ##
+#############################
+#!/bin/bash
+ 
+# Variable exposed by Orchestrator
+OldMaster=$ORC_FAILED_HOST
+PROXYSQL_HOST="mysql3"
+ 
+# stop accepting connections to old master
+(
+echo 'UPDATE mysql_servers SET STATUS="OFFLINE_SOFT" WHERE hostname="'"$OldMaster"'";'
+echo "LOAD MYSQL SERVERS TO RUNTIME;"
+) | mysql -vvv -uivan -p**** -h ${PROXYSQL_HOST} -P6032
+ 
+# wait while connections are still active and we are in the grace period
+CONNUSED=`mysql -uivan -p**** -h ${PROXYSQL_HOST} -P6032 -e 'SELECT IFNULL(SUM(ConnUsed),0) FROM stats_mysql_connection_pool WHERE status="OFFLINE_SOFT" AND srv_host="'"$OldMaster"'"' -B -N 2&gt; /dev/null`
+TRIES=0
+while [ $CONNUSED -ne 0 -a $TRIES -ne 20 ]
+do
+  CONNUSED=`mysql -uivan -p**** -h ${PROXYSQL_HOST} -P6032 -e 'SELECT IFNULL(SUM(ConnUsed),0) FROM stats_mysql_connection_pool WHERE status="OFFLINE_SOFT" AND srv_host="'"$OldMaster"'"' -B -N 2&gt; /dev/null`
+  TRIES=$(($TRIES+1))
+  if [ $CONNUSED -ne "0" ]; then
+    sleep 0.05
+  fi
+done
+
+###############################
+###### "/tmp/postfailover.sh ##
+###############################
+#!/bin/bash
+ 
+OldMaster=$ORC_FAILED_HOST
+NewMaster=$ORC_SUCCESSOR_HOST
+PROXYSQL_HOST="mysql3"
+ 
+# remove old master from writers hostgroup
+(
+echo 'DELETE FROM mysql_servers WHERE hostgroup_id=0 AND hostname="'"$OldMaster"'";'
+echo 'LOAD MYSQL SERVERS TO RUNTIME; SAVE MYSQL SERVERS TO DISK;'
+) | mysql -vvv -uivan -p**** -h ${PROXYSQL_HOST} -P6032
+ 
+# promote the new master by adding to the writers hostgroup
+(
+echo 'INSERT INTO mysql_servers(hostgroup_id,hostname,port,status) values (0, "'"$NewMaster"'", 3306, "ONLINE");'
+echo 'LOAD MYSQL SERVERS TO RUNTIME; SAVE MYSQL SERVERS TO DISK;'
+) | mysql -vvv -uivan -p**** -h ${PROXYSQL_HOST} -P6032
+ 
+# if graceful then set old master ONLINE in read hostgroup and start replication
+if [ "$ORC_COMMAND" == "graceful-master-takeover" ]
+then
+(
+echo 'UPDATE mysql_servers SET status="ONLINE" WHERE hostgroup_id=1 AND hostname="'"$OldMaster"'";'
+echo 'LOAD MYSQL SERVERS TO RUNTIME; SAVE MYSQL SERVERS TO DISK;'
+) | mysql -vvv -uivan -p**** -h ${PROXYSQL_HOST} -P6032
+ 
+# start replication threads on the old master
+# not working for now as hook is fired too soon https://github.com/github/orchestrator/issues/453
+#mysql -vvv -h$OldMaster -uorchestrator -p**** -e'start slave;'
+fi
