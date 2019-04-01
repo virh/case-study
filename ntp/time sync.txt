@@ -3,7 +3,7 @@ hwclock --hctosys
 hwclock -s
 
 #system time sync
-hwclock --systohc <== sys£¨ÏµÍ³Ê±¼ä£©to£¨Ð´µ½£©hc£¨Hard Clock£©
+hwclock --systohc <== sysï¼ˆç³»ç»Ÿæ—¶é—´ï¼‰toï¼ˆå†™åˆ°ï¼‰hcï¼ˆHard Clockï¼‰
 hwclock -w
 
 
