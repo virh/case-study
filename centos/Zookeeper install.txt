@@ -102,3 +102,8 @@ bin/zkCli.sh -server 192.168.238.129:2181
 create /zk_znode_1 sample_data
 ls /
 get /zk_znode_1
+
+# read snapshot 
+java -cp zookeeper-3.4.14.jar:lib/log4j-1.2.17.jar:lib/slf4j-log4j12-1.7.25.jar:lib/slf4j-api-1.7.25.jar org.apache.zookeeper.server.SnapshotFormatter version-2/snapshot.xxx
+# read transaction log
+java -cp zookeeper-3.4.14.jar:lib/log4j-1.2.17.jar:lib/slf4j-log4j12-1.7.25.jar:lib/slf4j-api-1.7.25.jar org.apache.zookeeper.server.LogFormatter /data/zookeeper/version-2/log.300000001
