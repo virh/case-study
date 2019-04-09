@@ -2,7 +2,9 @@ mkdir /usr/java
 cd /usr/java
 tar zxvf jdk-8u92-linux-x64.gz
 rm -f jdk-8u92-linux-x64.gz
+sudo ln -s /usr/java/jdk1.8.0_92 /usr/java/jdk
 # vi /etc/bashrc or /etc/environment add
 export JAVA_HOME=/usr/java/jdk1.8.0_92
 export JRE_HOME=/usr/java/jdk1.8.0_92/jre
 export PATH=$PATH:/usr/java/jdk1.8.0_92/bin:/usr/java/jdk1.8.0_92/jre/bin
+source /etc/bashrc

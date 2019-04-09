@@ -1,0 +1,104 @@
+# install zk to 129 130 131 for cluster
+sudo useradd zk -m
+sudo usermod --shell /bin/bash zk
+sudo passwd zk
+usermod -aG wheel zk
+su -l zk
+
+sudo mkdir -p /data/zookeeper
+sudo chown zk:zk /data/zookeeper
+
+cd /opt
+sudo wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
+sudo tar -xvf zookeeper-3.4.14.tar.gz
+sudo chown zk:zk -R  zookeeper-3.4.14
+sudo ln -s zookeeper-3.4.14 zookeeper
+sudo chown -h zk:zk zookeeper
+
+vi /opt/zookeeper/conf/zoo.cfg
+# zoo.cfg begin #
+tickTime=2000
+dataDir=/data/zookeeper
+clientPort=2181
+maxClientCnxns=60
+# zoo.cfg end #
+
+cd /opt/zookeeper
+bin/zkServer.sh start
+bin/zkCli.sh -server 127.0.0.1:2181
+bin/zkServer.sh stop
+
+sudo vi /etc/systemd/system/zk.service
+# zk.service begin #
+[Unit]
+Description=Zookeeper Daemon
+Documentation=http://zookeeper.apache.org
+Requires=network.target
+After=network.target
+
+[Service]    
+Type=forking
+WorkingDirectory=/opt/zookeeper
+User=zk
+Group=zk
+Environment=JAVA_HOME=/usr/java/jdk
+Environment=JRE_HOME=/usr/java/jdk/jre
+ExecStart=/opt/zookeeper/bin/zkServer.sh start /opt/zookeeper/conf/zoo.cfg
+ExecStop=/opt/zookeeper/bin/zkServer.sh stop /opt/zookeeper/conf/zoo.cfg
+ExecReload=/opt/zookeeper/bin/zkServer.sh restart /opt/zookeeper/conf/zoo.cfg
+TimeoutSec=30
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+# zk.service end #
+sudo systemctl start zk
+sudo systemctl enable zk
+sudo systemctl status zk
+sudo systemctl stop zk
+sudo systemctl restart zk
+
+sudo chown zk:zk /etc/systemd/system/zk.service
+
+# journalctl -u zk
+# journalctl -xe
+# ExecStart= ... start-foreground .. for debug
+
+# multi node cluster
+sudo vi /opt/zookeeper/conf/zoo.cfg
+# zoo.cfg begin #
+tickTime=2000
+dataDir=/data/zookeeper
+clientPort=2181
+maxClientCnxns=60
+initLimit=10
+syncLimit=5
+server.1=192.168.238.129:2888:3888
+server.2=192.168.238.130:2888:3888
+server.3=192.168.238.131:2888:3888
+# zoo.cfg end #
+
+sudo vi /data/zookeeper/myid
+# 192.168.238.129
+echo 1 > /data/zookeeper/myid
+# 192.168.238.130 
+echo 2 > /data/zookeeper/myid
+# 192.168.238.131 
+echo 3 > /data/zookeeper/myid
+
+# open 2888 and 3888 for each node
+sudo firewall-cmd --zone=public --add-port=2181/tcp --permanent
+sudo firewall-cmd --zone=public --add-port=2888/tcp --permanent
+sudo firewall-cmd --zone=public --add-port=3888/tcp --permanent
+sudo firewall-cmd --reload
+
+cd /opt/zookeeper
+java -cp zookeeper-3.4.14.jar:lib/log4j-1.2.17.jar:lib/slf4j-log4j12-1.7.25.jar:lib/slf4j-api-1.7.25.jar:conf org.apache.zookeeper.server.quorum.QuorumPeerMain conf/zoo.cfg
+
+# ssh login node 3
+su -l zk
+cd /opt/zookeeper
+bin/zkCli.sh -server 192.168.238.129:2181
+create /zk_znode_1 sample_data
+ls /
+get /zk_znode_1
