@@ -1,0 +1,172 @@
+# install redis to 129 130 131 for cluster 
+# yum -y install gcc
+cd /opt
+wget download.redis.io/releases/redis-4.0.14.tar.gz
+tar -xf redis-4.0.14.tar.gz
+cd redis-4.0.14
+make MALLOC=libc 
+make install
+
+# 192.168.238.129 (master)
+# Setup required directories
+mkdir -p /etc/redis /var/run/redis /var/log/redis /var/redis/6379
+cp redis.conf redis.conf.bak
+cp redis.conf /etc/redis/6379.conf
+# Configure redis master
+vi /etc/redis/6379.conf
+## 6397.conf begin ##
+bind 192.168.238.129
+port 6379
+daemonize yes
+pidfile "/var/run/redis/redis_6379.pid"
+logfile "/var/log/redis/redis_6379.log"
+dir "/var/redis/6379"
+## 6397.conf end ##
+# Configure redis master sentinel
+vi /etc/redis/sentinel_6379.conf
+## sentinel_6379.conf begin ##
+bind 192.168.238.129
+port 16379
+sentinel monitor redis-cluster 192.167.238.1 6379 2
+sentinel down-after-milliseconds redis-cluster 5000
+sentinel parallel-syncs redis-cluster 1
+sentinel failover-timeout redis-cluster 10000
+daemonize yes
+pidfile "/var/run/redis/sentinel_6379.pid"
+dir "/var/redis/6379"
+## sentinel_6379.conf end ##
+# Add non-privileged user
+adduser redis -M -g daemon
+passwd -l redis
+chown -R redis:daemon /opt/redis-4.0.14
+chown -R redis:daemon /var/run/redis
+chown -R redis:daemon /var/log/redis
+chown -R redis:daemon /var/redis/
+# Setup init scripts
+cp redis-6379-init-script /etc/init.d/redis_6379
+chmod 750 /etc/init.d/redis_6379
+chkconfig redis_6379 on
+cp sentinel-6379-init-script /etc/init.d/sentinel_6379
+chmod 750 /etc/init.d/sentinel_6379
+chkconfig sentinel_6379 on
+# Start service
+service redis_6379 start
+service sentinel_6379 start
+
+# 192.168.238.130 (slave)
+# Setup required directories
+mkdir -p /etc/redis /var/run/redis /var/log/redis /var/redis/6380
+cp redis.conf redis.conf.bak
+cp redis.conf /etc/redis/6380.conf
+# Configure redis slave 1
+vi /etc/redis/6380.conf
+## 6380.conf begin ##
+bind 192.168.238.130
+port 6380
+daemonize yes
+pidfile "/var/run/redis/redis_6380.pid"
+logfile "/var/log/redis/redis_6380.log"
+dir "/var/redis/6380"
+slaveof 192.168.238.129 6379
+## 6380.conf end ##
+# Configure redis slave 1 sentinel
+vi /etc/redis/sentinel_6380.conf
+## sentinel_6380.conf begin ##
+bind 192.168.238.130
+port 16380
+sentinel monitor redis-cluster 192.167.238.1 6379 2
+sentinel down-after-milliseconds redis-cluster 5000
+sentinel parallel-syncs redis-cluster 1
+sentinel failover-timeout redis-cluster 10000
+daemonize yes
+pidfile "/var/run/redis/sentinel_6380.pid"
+dir "/var/redis/6380"
+## sentinel_6380.conf begin ##
+# Add non-privileged user
+adduser redis -M -g daemon
+passwd -l redis
+chown -R redis:daemon /opt/redis-4.0.14
+chown -R redis:daemon /var/run/redis
+chown -R redis:daemon /var/log/redis
+chown -R redis:daemon /var/redis/
+# Setup init scripts
+cp redis-6380-init-script /etc/init.d/redis_6380
+chmod 750 /etc/init.d/redis_6380
+chkconfig redis_6380 on
+cp sentinel-6380-init-script /etc/init.d/sentinel_6380
+chmod 750 /etc/init.d/sentinel_6380
+chkconfig sentinel_6380 on
+# Start service
+service redis_6380 start
+service sentinel_6380 start
+
+# 192.168.238.131 (slave)
+# Setup required directories
+mkdir -p /etc/redis /var/run/redis /var/log/redis /var/redis/6381
+cp redis.conf redis.conf.bak
+cp redis.conf /etc/redis/6381.conf
+# Configure redis slave 2
+vi /etc/redis/6381.conf
+## 6381.conf begin ##
+bind 192.168.238.131
+port 6381
+daemonize yes
+pidfile "/var/run/redis/redis_6381.pid"
+logfile "/var/log/redis/redis_6381.log"
+dir "/var/redis/6381"
+slaveof 192.168.238.129 6379
+## 6381.conf end ##
+# Configure redis slave 2 sentinel
+vi /etc/redis/sentinel_6381.conf
+## sentinel_6381.conf begin ##
+bind 192.168.238.131
+port 16381
+sentinel monitor redis-cluster 192.167.238.1 6379 2
+sentinel down-after-milliseconds redis-cluster 5000
+sentinel parallel-syncs redis-cluster 1
+sentinel failover-timeout redis-cluster 10000
+daemonize yes
+pidfile "/var/run/redis/sentinel_6381.pid"
+dir "/var/redis/6381"
+## sentinel_6381.conf begin ##
+# Add non-privileged user
+adduser redis -M -g daemon
+passwd -l redis
+chown -R redis:daemon /opt/redis-4.0.14
+chown -R redis:daemon /var/run/redis
+chown -R redis:daemon /var/log/redis
+chown -R redis:daemon /var/redis/
+# Setup init scripts
+cp redis-6381-init-script /etc/init.d/redis_6381
+chmod 750 /etc/init.d/redis_6381
+chkconfig redis_6381 on
+cp sentinel-6381-init-script /etc/init.d/sentinel_6381
+chmod 750 /etc/init.d/sentinel_6381
+chkconfig sentinel_6381 on
+# Start service
+service redis_6381 start
+service sentinel_6381 start
+
+# open 6397 and 16397 for each node
+sudo firewall-cmd --zone=public --add-port=6379/tcp --permanent
+sudo firewall-cmd --zone=public --add-port=16379/tcp --permanent
+sudo firewall-cmd --reload
+
+# Sentinel Testing
+/usr/local/bin/redis-cli -h 192.168.238.131 -p 16381
+
+# To see current masters
+192.168.238.131:16381> SENTINEL masters
+
+# To see slaves for given cluster
+192.168.238.131:16381> SENTINEL slaves redis-cluster
+
+#Redis Fail-over Testing
+# Connect to redis master and execute below command
+/usr/local/bin/redis-cli -h 192.168.238.129 -p 6379
+192.168.238.129:6379> DEBUG SEGFAULT
+
+# Forced failure
+192.168.238.129:6379> SENTINEL failover redis-cluster
+# Check after few seconds. You should get new master
+192.168.238.129:6379> SENTINEL masters
