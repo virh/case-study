@@ -33,6 +33,7 @@ sentinel parallel-syncs redis-cluster 1
 sentinel failover-timeout redis-cluster 10000
 daemonize yes
 pidfile "/var/run/redis/sentinel_6379.pid"
+logfile "/var/log/redis/sentinel_6379.log"
 dir "/var/redis/6379"
 ## sentinel_6379.conf end ##
 # Add non-privileged user
@@ -42,6 +43,7 @@ chown -R redis:daemon /opt/redis-4.0.14
 chown -R redis:daemon /var/run/redis
 chown -R redis:daemon /var/log/redis
 chown -R redis:daemon /var/redis/
+chown -R redis:daemon /etc/redis/
 # Setup init scripts
 cp redis-6379-init-script /etc/init.d/redis_6379
 chmod 750 /etc/init.d/redis_6379
@@ -80,6 +82,7 @@ sentinel parallel-syncs redis-cluster 1
 sentinel failover-timeout redis-cluster 10000
 daemonize yes
 pidfile "/var/run/redis/sentinel_6380.pid"
+logfile "/var/log/redis/sentinel_6380.log"
 dir "/var/redis/6380"
 ## sentinel_6380.conf begin ##
 # Add non-privileged user
@@ -89,6 +92,7 @@ chown -R redis:daemon /opt/redis-4.0.14
 chown -R redis:daemon /var/run/redis
 chown -R redis:daemon /var/log/redis
 chown -R redis:daemon /var/redis/
+chown -R redis:daemon /etc/redis/
 # Setup init scripts
 cp redis-6380-init-script /etc/init.d/redis_6380
 chmod 750 /etc/init.d/redis_6380
@@ -136,6 +140,7 @@ chown -R redis:daemon /opt/redis-4.0.14
 chown -R redis:daemon /var/run/redis
 chown -R redis:daemon /var/log/redis
 chown -R redis:daemon /var/redis/
+chown -R redis:daemon /etc/redis/
 # Setup init scripts
 cp redis-6381-init-script /etc/init.d/redis_6381
 chmod 750 /etc/init.d/redis_6381
@@ -167,6 +172,10 @@ sudo firewall-cmd --reload
 192.168.238.129:6379> DEBUG SEGFAULT
 
 # Forced failure
-192.168.238.129:6379> SENTINEL failover redis-cluster
+192.168.238.131:16381> SENTINEL failover redis-cluster
 # Check after few seconds. You should get new master
-192.168.238.129:6379> SENTINEL masters
+192.168.238.131:16381> SENTINEL masters
+
+sysctl -w net.core.somaxconn=1024
+
+systemctl start my-service && journalctl -fexu my-service
