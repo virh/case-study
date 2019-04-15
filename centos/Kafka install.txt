@@ -15,8 +15,9 @@ tar -xvzf /opt/kafka_2.12-2.2.0.tgz --strip 1
 vi ~/kafka/config/server.properties
 # broker.id for 129,130,131 each node
 broker.id=129
+listeners=PLAINTEXT://192.168.238.129:9092
 zookeeper.connect=192.168.238.129:2181,192.168.238.130.2181,192.168.238.131:2181
-zookeeper.connection.timeout.ms=30000
+zookeeper.connection.timeout.ms=90000
 # add the following to the bottom of the file
 delete.topic.enable=true
 
