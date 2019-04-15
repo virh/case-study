@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
@@ -20,6 +21,7 @@ public class ZipkinApplication2 {
 
 }
 
+@RestController
 class ZipkinController {
 
     @Autowired
@@ -37,7 +39,7 @@ class ZipkinController {
     {
         LOG.info("Inside zipkinService 2..");
          
-         String response = (String) restTemplate.exchange("http://localhost:8082/zipkin3",
+         String response = (String) restTemplate.exchange("http://localhost:8083/zipkin3",
                         HttpMethod.GET, null, new ParameterizedTypeReference<String>() {}).getBody();
         return "Hi...";
     }
