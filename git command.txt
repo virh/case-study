@@ -1,0 +1,43 @@
+git branch branchname <sha1-of-commit>
+
+#Delete a branch on your local filesystem :
+git branch -d [name_of_your_new_branch]
+
+#To force the deletion of local branch on your filesystem :
+git branch -D [name_of_your_new_branch]
+
+git config --global user.name "John Doe"
+git config --global user.email "john@doe.org"
+
+git config user.name "John Doe"
+git config user.email "john@doe.org"
+
+git rebase -i B
+change the lines for both C and D from pick to edit
+Once the rebase started, it would first pause at C
+git commit --amend --author="Author Name user@mail.com"
+git rebase --continue
+#git push -f to update your origin with the updated commits.
+
+git push -u origin task/ehngwxx/MR5186-sp1-lbb
+
+
+ssh-keygen -t rsa -C "user@mail.com"
+
+git remote set-url origin https://github.com/USERNAME/REPOSITORY.git
+
+ssh -vv -p 29418 john.doe@git.example.com
+ssh -vT -p 29418 john.doe@git.example.com
+
+
+git push origin HEAD:refs/for/[BRANCH_NAME] 
+
+
+git push --delete <remote_name> <branch_name>
+
+# download the commit-msg hook copy to repo/.git/hooks
+https://githost.com/tools/hooks/commit-msg
+# add the execute mode
+chmod +x commit-msg
+# add the commit ChangeId
+git commit --amend
