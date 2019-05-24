@@ -1,0 +1,18 @@
+1.install mysql create activemq database
+2.install activemq 5.8
+3.copy one activemq as slave
+4.copy mysql connector.jar to activemq/lib
+4.append the activemq.xml
+-- begin<broker>
+<persistenceAdapter>  
+     <jdbcPersistenceAdapter dataDirectory="${activemq.base}/data" dataSource="#mysql-ds"/>  
+</persistenceAdapter>
+-- after</broker>
+<bean id="mysql-ds" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">  
+   <property name="driverClassName" value="com.mysql.jdbc.Driver"/>  
+   <property name="url" value="jdbc:mysql://localhost/activemq?relaxAutoCommit=true"/>  
+   <property name="username" value="activemq"/>  
+   <property name="password" value="activemq"/>  
+   <property name="maxActive" value="200"/>  
+   <property name="poolPreparedStatements" value="true"/>  
+ </bean> 
