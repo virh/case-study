@@ -19,7 +19,7 @@ git commit --amend --author="Author Name user@mail.com"
 git rebase --continue
 #git push -f to update your origin with the updated commits.
 
-git push -u origin task/ehngwxx/MR5186-sp1-lbb
+git push -u origin personal/branch
 
 
 ssh-keygen -t rsa -C "user@mail.com"
