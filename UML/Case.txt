@@ -1,0 +1,16 @@
+Sense 1.
+One person want to buy a bulk of oranges from caa web site, when this person have logined, 
+the system manager receive a letter that this person is a vip client, so we must adjust 1000 
+dollar for him, after this he can take the goods first, and after some period he can return the
+money, and remain the 1000 dollar credit.
+Every client has one account for consuming, when the person choose return, it can return all or
+a part of the credit. If the person can return one order for more than one consume orders. The 
+system must automate choose the fitted order match return.
+Also the person can charge into the account and withdraw the money.
+After some period, the person feel the goods is not confort him, he can return the goods, and
+the system must return the money into the account, which way the person select consume which way 
+the money return back.
+When the site deliver the client's goods, it should notify the client his order was delivered by 
+email or SMS or other ways, and the client can trace his order.
+
+single thread-> multi thread-> multi module-> multi project-> multi node-> cluster node
