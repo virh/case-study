@@ -1,0 +1,24 @@
+@startuml
+participant Client as C
+participant Deliver as D
+participant Platform as P
+participant Finance as F
+participant Stock as S
+D -> S : add orange
+C -> P : buy orange
+alt stock enough
+alt balance enough
+P -> F : sub client account
+P -> S : decrease orange number
+P -> D : delive client orange
+P -> C : delive finished
+D -> C : tranfer orange
+C -> P : confirm the deliver finished
+else balance not enough
+P -> C : charge first
+end
+else stock not enough
+P -> C : not support
+end
+
+@enduml
