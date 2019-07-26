@@ -1,0 +1,4 @@
+set python PATH
+set python/scripts PATH
+
+pip install pywin32
