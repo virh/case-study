@@ -1,0 +1,4 @@
+add static method in Perferences/Java/Editor/Content Assist/Favorites like this:
+org.junit.Assert.*
+org.mockito.ArgumentMatchers.*
+org.mockito.Mockito.*

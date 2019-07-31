@@ -1,0 +1,10 @@
+# remote hyper-v
+1.run "cmd" as administrator;
+
+2.input <bcdedit /copy {current} /d "Windows10 no Hyper-V">
+
+3.input <bcdedit /set {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} hypervisorlaunchtype OFF> then restart computer, also remember replace "XXX" from 2 step output
+
+4.disable device guard
+see link:
+https://www.tenforums.com/tutorials/68913-enable-disable-device-guard-windows-10-a.html
