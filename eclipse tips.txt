@@ -2,3 +2,7 @@ add static method in Perferences/Java/Editor/Content Assist/Favorites like this:
 org.junit.Assert.*
 org.mockito.ArgumentMatchers.*
 org.mockito.Mockito.*
+
+spring boot 2.1.3.RELEASE with dubbo 2.7.1
+eclipse run java with error " NoClassDefFoundError shown below."
+should run comman "mvn eclipse:clean eclipse:eclipse", it was caused by the spring version 4.3.16.RELEASE conflict with version 5.1.15.RELEASE
