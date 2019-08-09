@@ -81,11 +81,12 @@ def main(argv):
 				if(str(ws.Cells(row, statusIndex).value).lower()=='open'):
 					tempPreviousIndex = statusIndex+1
 					tempPreviousValue = ws.Cells(row, tempPreviousIndex).value
-					while (tempPreviousIndex<previousWeekIndex) and tempPreviousValue:
-						currentIndex = tempPreviousIndex+2
-						currentValue = ws.Cells(row, currentIndex).value
+					while (tempPreviousIndex<previousWeekIndex):
+						tempPreviousIndex = tempPreviousIndex+2
+						currentValue = ws.Cells(row, tempPreviousIndex).value
 						if(not currentValue):
-							ws.Cells(row, currentIndex).value = tempPreviousValue
+							ws.Cells(row, tempPreviousIndex).value = tempPreviousValue
+							#print('update row ', row, " week index ", tempPreviousIndex)	
 						else:
 							tempPreviousValue = currentValue
 					previousValue = ws.Cells(row, previousWeekIndex).value
