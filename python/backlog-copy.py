@@ -79,17 +79,16 @@ def main(argv):
 			#print('Week index ', ws.Cells(81, 73).value)	
 			for row in range(5, rowCount + 1):
 				if(str(ws.Cells(row, statusIndex).value).lower()=='open'):
+					tempPreviousIndex = statusIndex+1
+					tempPreviousValue = ws.Cells(row, tempPreviousIndex).value
+					while (tempPreviousIndex<previousWeekIndex) and tempPreviousValue:
+						currentIndex = tempPreviousIndex+2
+						currentValue = ws.Cells(row, currentIndex).value
+						if(not currentValue):
+							ws.Cells(row, currentIndex).value = tempPreviousValue
+						else:
+							tempPreviousValue = currentValue
 					previousValue = ws.Cells(row, previousWeekIndex).value
-					if (not previousValue):
-						 tempPreviousIndex = previousWeekIndex-2
-						 tempPreviousValue = ws.Cells(row, tempPreviousIndex).value
-						 while (tempPreviousIndex>statusIndex) and (not tempPreviousValue):
-								tempPreviousIndex = tempPreviousIndex-2
-								tempPreviousValue = ws.Cells(row, tempPreviousIndex).value
-						 while (tempPreviousIndex<=previousWeekIndex) and tempPreviousValue:
-						 		tempPreviousIndex = tempPreviousIndex+2
-						 		ws.Cells(row, tempPreviousIndex).value = tempPreviousValue
-						 previousValue = ws.Cells(row, previousWeekIndex).value
 					#print('previousValue value ', previousValue)
 					if (previousValue) and (not ws.Cells(row, currentWeekIndex).value):
 						ws.Cells(row, currentWeekIndex).value = previousValue
