@@ -46,10 +46,10 @@ def main(argv):
 			
 			#excel.Visible = True
 			wb = excel.Workbooks.Open(os.path.abspath(filename))
-			#try:
-			ws = wb.Worksheets('Team Backlog')		
-			#except:
-				#continue
+			try:
+				ws = wb.Worksheets('Team Backlog')		
+			except:
+				continue
 			allData = ws.UsedRange
 			
 			# Get number of rows used on active sheet
@@ -99,7 +99,7 @@ def main(argv):
 			wb.Close()
 			#log(f, 'Update file[' + filename + '] end...')
 			log(f, filename)
-	updateCount += 1
+			updateCount += 1
 	excel.Quit()
 	excel = None
 	log(f, '=========End update files=========')
