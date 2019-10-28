@@ -1,0 +1,26 @@
+for retrieve win32com.client.constants.xlCellValue should use:
+excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
+not 
+excel = win32com.client.Dispatch('Excel.Application')
+
+the format condition example:
+wb = excel.Workbooks.Open(os.path.abspath(filename))
+try:
+	ws = wb.Worksheets('Report Status')		
+except:
+	wb.Close(False)
+	continue
+ws.Range("C5:BC16").Select()
+formula1 = "=AND(VALUE(CONCATENATE(RIGHT(YEAR(TODAY()),2),TEXT(WEEKNUM(TODAY(),21),\"00\")))>VALUE(C$4),C5=0,IFERROR(OFFSET('Leave Plan'!$A$5,MATCH($A5,'Leave Plan'!$A$5:$A$20,0)-1,MATCH(C$4,'Leave Plan'!$C$4:$BC$4,0)+1,1,1),0)<5)"
+ws.Range("C5:BC16").FormatConditions.Add(win32com.client.constants.xlCellValue, win32com.client.constants.xlGreaterEqual, formula1)
+#ws.Range("C5:BC16").FormatConditions(excel.Selection.FormatConditions.Count).SetFirstPriority() 
+ws.Range("C5:BC16").FormatConditions(1).Font.Bold = True
+ws.Range("C5:BC16").FormatConditions(1).Interior.Color = 5296274
+ws.Range("C5:BC16").FormatConditions(1).StopIfTrue = False		
+
+display the format condition result use DisplayFormat:
+print(ws.Cells(row, previousWeekIndex).DisplayFormat.Interior.Color)
+
+clear python cache:
+C:\Users\<username>\AppData\Local\Temp\gen_py\
+C:\Users\<username>\AppData\Local\Programs\Python\Python37-32\Lib\site-packages\win32com\client\__pycache__

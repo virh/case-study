@@ -1,8 +1,10 @@
 package rh.virh.casestudy;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.stream.IntStream;
 
 public class PriorityQueueTest {
 
@@ -25,6 +27,13 @@ public class PriorityQueueTest {
 		});
 		queue.forEach(user-> {
 			System.out.println(user.name);
+		});
+//		queue.stream().filter(user->!user.getName().equals("user3")).forEach(user-> {
+//			System.out.println(user.name);
+//		});
+		Iterator<User> iterator = queue.iterator();
+		IntStream.range(0, 2).forEach(index -> {
+			System.out.println(iterator.next().name);
 		});
 	}
 	
