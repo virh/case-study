@@ -1,0 +1,42 @@
+rm -f /etc/localtime
+#ln -sf /usr/share/zoneinfo/Asia/Chongqing /etc/localtime
+
+docker run -d --name=prometheus -p 9090:9090 -v <PATH_TO_prometheus.yml_FILE>:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml
+
+docker run -e TZ=Asia/Chongqing date
+
+docker run -d --name=prometheus -p 9090:9090 -v /root/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml
+
+-Dspring-boot.run.jvmArguments="-Duser.timezone=UTC"
+
+
+Force UID=0 (root) when starting the container:
+docker exec -u 0 -it [container_id] sh
+
+firewall-cmd --permanent --add-port=8080/tcp
+
+vmware hard clock update
+
+Use --show to print the hardware time:
+
+hwclock --show
+You can set the hardware clock to the current system time:
+
+hwclock --systohc
+Or the system time to the hardware clock
+
+hwclock --hctosys
+
+To change part of the date, output the current date with the date part that you want to change as a string and all others as date formatting variables. Then pass that to the date -s command to set it:
+
+# date -s "$(date +'%Y12%d %H:%M')"
+Mon Dec 22 10:55:03 GMT 2014
+changes the month to the 12th month - December.
+
+The date formats are:
+
+%Y - Year
+%m - Month
+%d - Day
+%H - Hour
+%M - Minute
