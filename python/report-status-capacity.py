@@ -9,31 +9,27 @@ def main(argv):
 	baseDir = ''
 	statusFile = ''
 	statusCell = ''
-	sprintArg = ''
 
 	try:
-		opts, args = getopt.getopt(argv,":h:f:s:",["dir=","sprint="])
+		opts, args = getopt.getopt(argv,":h:f:s:",["dir="])
 	except getopt.GetoptError:
-		print('report-status-calculate.py --dir=<dir> --sprint=<sprint> -f <filename> -s <sheetname>')
+		print('report-status-capacity.py --dir=<dir> -f <filename> -s <sheetname>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print('report-status-calculate.py --dir=<dir> --sprint=<sprint> -f <filename> -s <sheetname>')
+			print('report-status-capacity.py --dir=<dir> -f <filename> -s <sheetname>')
 			sys.exit()
 		elif opt == '--dir':
 			baseDir = arg
-		elif opt == '--sprint':
-			sprintArg = arg			
 		elif opt in ("-f"):
 			statusFile = arg
 		elif opt in ("-s"):
 			statusSheet = arg		
 	if (not statusFile) or (not statusSheet):
-		print("Usage: report-status-calculate.py --dir=<dir> --sprint=<sprint> -f <filename> -s <sheetname>")
+		print("Usage: report-status-capacity.py --dir=<dir> -f <filename> -s <sheetname>")
 		return
 	print('Status file is ', statusFile)
-	print('Status sheet is ', statusSheet)			
-	print('Sprint arg is ', sprintArg)	
+	print('Status sheet is ', statusSheet)				
 	if not baseDir:
 		basepath = '.'
 	else:
@@ -53,10 +49,8 @@ def main(argv):
 	#statusFile = 'update-status.xlsx'
 	#statusSheet = 'XFT Velocity'
 	updateTeams = []
-	capacityTeams = {}
-	remainTeams = {}
 	
-	f = open(os.path.join(basepath, "report-status-calculate-log.txt"),"w+")	
+	f = open(os.path.join(basepath, "report-status-capacity-log.txt"),"w+")	
 	try:
 		excludeFile = open(os.path.join(basepath, "exclude.txt"))
 		excludeContent = excludeFiles(excludeFile)
@@ -66,30 +60,20 @@ def main(argv):
 	log(f, '=========Begin read files=========')
 	for entry in os.listdir(basepath):
 		if os.path.isfile(os.path.join(basepath, entry)) and 'xlsx'==os.path.splitext(entry)[1][1:]:
-			if entry.startswith('~$'):
-				continue
 			if entry in excludeContent:
 				log(f, '[' + entry + '] exclude')
 				continue
 			#print(entry, os.path.splitext(entry)[0].split('_')[-1])
-			#team = os.path.splitext(entry)[0].split('_')[-1]
+			team = os.path.splitext(entry)[0].split('_')[-1]
 			filename = os.path.join(basepath, entry)
 			print(os.path.abspath(filename))
 			
 			#excel.Visible = True
 			wb = excel.Workbooks.Open(os.path.abspath(filename))
 			try:
-				ws = wb.Worksheets('Capacity')		
-				team = ws.Cells(1, 1).value	
-			except:
-				wb.Close(False)
-				log(f, 'Sheet name [Capacity] invaild!')	
-				continue			
-			try:
 				ws = wb.Worksheets('Report Status')		
 			except:
 				wb.Close(False)
-				log(f, 'Sheet name [Report Status] invaild!')	
 				continue
 			allData = ws.UsedRange
 			
@@ -114,73 +98,33 @@ def main(argv):
 					currentWeekIndex = col
 					#print('current week index ', currentWeekIndex)
 			#previousWeekIndex=24
-			if ( not sprintArg ):
-				step = 0
-				while(ws.Cells(3, previousWeekIndex-step).value is None):
-					step = step + 1
-				sprintIndex = ws.Cells(3, previousWeekIndex-step).value
-				sprintIndex = sprintIndex.replace("Sprint", today.strftime('%y'))
-			else:
-				sprintIndex = str(sprintArg)
-			#print(sprintIndex)
+			step = 0
+			while(ws.Cells(3, previousWeekIndex-step).value is None):
+				step = step + 1
+			sprintIndex = ws.Cells(3, previousWeekIndex-step).value
+			sprintIndex = sprintIndex.replace("Sprint", today.strftime('%y'))
+			print(sprintIndex)
+			try:
+				ws = wb.Worksheets('Capacity')		
+			except:
+				log(f, 'Sheet name [Capacity] can not open!')		
+			ws.Cells(4, 1).NumberFormat='@'
+			ws.Cells(4, 1).value=sprintIndex
+			print(ws.Cells(4, 1).NumberFormat)
+			print(ws.Cells(4, 1).value)
+			print(ws.Cells(19, 7).value)		
+			ws.Cells(4, 1).value='1910'
+			print(ws.Cells(19, 7).value)
+			print("{0:.2f}".format(ws.Cells(19, 7).value))
+			return
 			for row in range(5, rowCount + 1):
 				if (ws.Cells(row, 1).value):
 					#print(ws.Cells(row, 1).value)
 					formatColor = ws.Cells(row, previousWeekIndex).DisplayFormat.Interior.Color
 					#print(formatColor)
-					if (formatColor==255 and str(ws.Cells(row, 2).value).lower()=='active'):
+					if (formatColor==255):
 						updateTeams.append(team)
-						log(f, team + ' name [' + ws.Cells(row, 1).value + '] found not update backlog. ')	
 						break		
-			# store Capacity Available and Comitted
-			try:
-				ws = wb.Worksheets('Capacity')		
-			except:
-				log(f, 'Sheet name [Capacity] can not open!')	
-			ws.Cells(4, 1).NumberFormat='@'
-			ws.Cells(4, 1).value=sprintIndex
-			capacityTeams[team]=["{0:.2f}".format(ws.Cells(19, 7).value),"{0:.2f}".format(ws.Cells(19, 8).value)]
-			#ws.Cells(4, 1).value='1910'
-			#capacityTeams[team+'back']=["{0:.2f}".format(ws.Cells(19, 7).value),"{0:.2f}".format(ws.Cells(19, 8).value)]
-			#print(capacityTeams)
-			
-			# store Remain
-			try:
-				ws = wb.Worksheets('Team Backlog')		
-			except:
-				log(f, 'Sheet name [Team Backlog] can not open!')		
-			allData = ws.UsedRange
-			rowCount = allData.Rows.Count
-			colCount = allData.Columns.Count
-			statusIndex = -1
-			taskIndex = -1
-			targetIndex = -1
-			sprintColIndex = -1
-			for col in range(1, colCount+1):
-				if (taskIndex>-1 and targetIndex>-1 and sprintColIndex>-1):
-					break
-				if (taskIndex==-1 and ws.Cells(1, col).value=='Task Description'):
-					taskIndex = col					
-				if (targetIndex==-1 and ws.Cells(1, col).value=='Target Sprint'):
-					targetIndex = col		
-				if (sprintColIndex==-1 and ws.Cells(3, col).value and int(ws.Cells(3, col).value)==int(sprintIndex)):
-					sprintColIndex = col
-				#print('Spring col ', col, ws.Cells(3, col).value)
-			#print('Task index ', taskIndex)		
-			#print('Target index ', targetIndex)	
-			#print('Sprint col index ', sprintColIndex)	
-			
-			remainSum = 0
-			for row in range(5, rowCount + 1):
-				if(not ws.Cells(row, taskIndex).value):
-					break				
-				if(not ws.Cells(row, sprintColIndex+2).value):
-					continue
-				if(ws.Cells(row, targetIndex).value and int(ws.Cells(row, targetIndex).value)<=int(sprintIndex)):
-					remainSum += int(ws.Cells(row, sprintColIndex+2).value)
-			#print('Remain sum is ', remainSum)
-			remainTeams[team]=remainSum
-						
 			wb.Close(False)
 			#log(f, 'Update file[' + filename + '] end...')
 			log(f, filename)
@@ -198,9 +142,7 @@ def main(argv):
 	for i in range(0, len(updateTeams)): 
 		team = updateTeams[i]
 		origin = decrement(statusWb, statusWs, team, sprintIndex)
-		log(f, team + ' sprint ' + sprintIndex + ' origin value ' + str(origin))	
-		storeCapacity(statusWb, statusWs, capacityTeams, remainTeams, sprintIndex)	
-		log(f, team + ' capacity, commit and remain update success!')		
+		log(f, team + ' sprint ' + sprintIndex + ' origin value ' + str(origin))				
 	log(f, '=========End Status File=========')
 	statusWb.Close()
 	excel.Quit()
@@ -235,37 +177,6 @@ def decrement(wb, ws, team, sprintIndex):
 					wb.Save()
 					break
 	return origin	
-
-def storeCapacity(wb, ws, capacityTeams, remainTeams, sprintIndex):
-	allData = ws.UsedRange
-	rowCount = allData.Rows.Count
-	colCount = allData.Columns.Count
-	teamIndex = -1
-	origin = -1
-	for col in range(3, colCount + 1):
-		#print(ws.Cells(1, col).value, sprintIndex)
-		if (int(ws.Cells(1, col).value)==int(sprintIndex)):
-			sprintCol = col
-			break
-	for row in range(2, rowCount + 1):
-		if (ws.Cells(row, 1).value):
-			teamIndex = row
-			team = ws.Cells(row, 1).value
-			capacityIndex = teamIndex
-			commitmentIndex = teamIndex+1
-			remainIndex = teamIndex+2
-			#print(capacityTeams)
-			#print(team)
-			#print(capacityTeams.get(team))
-			if (capacityTeams.get(team)):
-				ws.Cells(capacityIndex, sprintCol).value = capacityTeams[team][0]
-				ws.Cells(commitmentIndex, sprintCol).value = capacityTeams[team][1]
-				#print(ws.Cells(capacityIndex, sprintCol).value)
-				#print(ws.Cells(commitmentIndex, sprintCol).value)
-			if (remainTeams.get(team)):
-				ws.Cells(remainIndex, sprintCol).value = remainTeams[team]
-	wb.Save()
-	return 
 
 def excludeFiles(file):
 	content = file.readlines()

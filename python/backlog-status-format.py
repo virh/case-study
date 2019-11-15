@@ -11,11 +11,11 @@ def main(argv):
 	try:
 		opts, args = getopt.getopt(argv,":h:",["dir="])
 	except getopt.GetoptError:
-		print('backlog-copy.py --dir=<dir>')
+		print('backlog-status-format.py --dir=<dir>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print('backlog-copy.py --dir=<dir>')
+			print('backlog-status-format.py --dir=<dir>')
 			sys.exit()
 		elif opt == '--dir':
 			baseDir = arg
@@ -36,14 +36,14 @@ def main(argv):
 	previousWeek = int(year + str(previousWeekNumber))
 	#print('Week number ', currentWeek, previousWeek)
 	
-	f = open(os.path.join(basepath, "updatelog.txt"),"w+")
+	f = open(os.path.join(basepath, "backlog-status-formatlog.txt"),"w+")
 	try:
 		excludeFile = open(os.path.join(basepath, "exclude.txt"))
 		excludeContent = excludeFiles(excludeFile)
 	except IOError:
 		excludeContent = []
 			
-	log(f, '=========Begin update files=========')
+	log(f, '=========Begin format files=========')
 	for entry in os.listdir(basepath):
 		if os.path.isfile(os.path.join(basepath, entry)) and 'xlsx'==os.path.splitext(entry)[1][1:]:
 			if entry.startswith('~$'):
@@ -81,7 +81,7 @@ def main(argv):
 				if (taskIndex>-1 and statusIndex>-1 and previousWeekIndex>-1 and currentWeekIndex>-1):
 					break
 				if (taskIndex==-1 and ws.Cells(1, col).value=='Task Description'):
-					taskIndex = col		
+					taskIndex = col					
 				if (statusIndex==-1 and ws.Cells(1, col).value=='Status'):
 					statusIndex = col
 				if (previousWeekIndex==-1 and ws.Cells(3, col).value and int(ws.Cells(3, col).value)==previousWeek):
@@ -91,26 +91,21 @@ def main(argv):
 					currentWeekIndex = col
 					#print('current week index ', currentWeekIndex)
 			#print('Week index ', ws.Cells(81, 73).value)	
-			for row in range(5, rowCount + 1):
+			for row in range(5, rowCount + 1):		
 				if(not ws.Cells(row, taskIndex).value):
 					break
-				#print('row index ', row)
-				if(str(ws.Cells(row, statusIndex).value).lower()=='open'):
-					tempPreviousIndex = statusIndex+1
-					tempPreviousValue = ws.Cells(row, tempPreviousIndex).value
-					while (tempPreviousIndex<previousWeekIndex):
-						tempPreviousIndex = tempPreviousIndex+2
-						currentValue = ws.Cells(row, tempPreviousIndex).value
-						if(not currentValue):
-							ws.Cells(row, tempPreviousIndex).value = tempPreviousValue
-							#print('update row ', row, " week index ", tempPreviousIndex)	
-						else:
-							tempPreviousValue = currentValue
-					previousValue = ws.Cells(row, previousWeekIndex).value
-					#print('previousValue value ', previousValue)
-					if (previousValue) and (not ws.Cells(row, currentWeekIndex).value):
-						ws.Cells(row, currentWeekIndex).value = previousValue
-						#print('cell value ', previousValue, ws.Cells(row, currentWeekIndex).value)
+				cellValue = ws.Cells(row, statusIndex).value		
+				#print('row index ', row, 'cell value', cellValue)
+				if(cellValue and str(cellValue).lower()=='closed'):
+					ws.Cells(row, statusIndex).value='Closed'
+				elif(cellValue and str(cellValue).lower()=='open'):
+					ws.Cells(row, statusIndex).value='Open'
+				elif(cellValue):
+					ws.Cells(row, statusIndex).value='Open'
+					log(f, 'row index ' + str(row) + '[' + cellValue + ']' + ' status format invaild rename to [Open]')
+				else:
+					ws.Cells(row, statusIndex).value='Open'
+					log(f, 'row index ' + str(row) + '[None]' + ' status format invaild rename to [Open]')
 
 			wb.Save()
 			wb.Close()
@@ -119,8 +114,8 @@ def main(argv):
 			updateCount += 1
 	excel.Quit()
 	excel = None
-	log(f, '=========End update files=========')
-	log(f, 'Totally updated ' + str(updateCount) + ' files!')
+	log(f, '=========End format files=========')
+	log(f, 'Totally formated ' + str(updateCount) + ' files!')
 	f.close()
 	return
 
