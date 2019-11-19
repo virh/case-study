@@ -41,3 +41,5 @@ https://githost.com/tools/hooks/commit-msg
 chmod +x commit-msg
 # add the commit ChangeId
 git commit --amend
+
+git pull --depth=1 origin master

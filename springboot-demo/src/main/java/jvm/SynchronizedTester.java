@@ -3,6 +3,8 @@ package jvm;
 public class SynchronizedTester {
 
 	public SynchronizedTester() {
+		int i = 1_000_000_100;
+		System.out.println(i/100*10);
 		System.out.println("empty");
 	}
 	
@@ -21,7 +23,7 @@ public class SynchronizedTester {
 	}
 	
 	public static void main(String[] args) {
-		//new SynchronizedTester(1);
+		new SynchronizedTester();
 		Parent  parent = new Parent();
 		Child child = new Child();
 		parent = child;

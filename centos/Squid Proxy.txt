@@ -1,0 +1,11 @@
+yum install squid 
+
+vi /etc/squid/blockwebsites.lst
+yahoo.com
+www.rediff.com
+
+vi /etc/squid/squid.conf
+acl blocksitelist dstdomain "/etc/squid/blockwebsites.lst"
+http_access deny blocksitelist
+
+tail -f /var/log/squid/access.log 
