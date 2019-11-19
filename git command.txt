@@ -24,6 +24,7 @@ git push -u origin personal/branch
 
 ssh-keygen -t rsa -C "user@mail.com"
 
+git remote get-url origin
 git remote set-url origin https://github.com/USERNAME/REPOSITORY.git
 
 ssh -vv -p 29418 john.doe@git.example.com
