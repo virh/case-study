@@ -1,0 +1,60 @@
+yum install wget
+
+# All values MUST be placed inside 'single quotes'
+# DO NOT use these special characters within values: \ " '
+wget https://git.io/vpnsetup-centos -O vpnsetup.sh && sudo \
+VPN_IPSEC_PSK='your_ipsec_pre_shared_key' \
+VPN_USER='your_vpn_username' \
+VPN_PASSWORD='your_vpn_password' \
+sh vpnsetup.sh
+
+yum install dnsmasq
+
+mv /etc/dnsmasq.conf /etc/dnsmasq.conf.bak
+vi /etc/dnsmasq.conf
+#
+resolv-file=/etc/resolv.dnsmasq.conf
+strict-order
+addn-hosts=/etc/dnsmasq.hosts
+listen-address=PUBLIC_IP
+#
+cp /etc/resolv.conf /etc/resolv.dnsmasq.conf
+vi /etc/resolv.conf 
+nameserver 127.0.0.1
+
+chkconfig dnsmasq on
+dnsmasq 
+
+service dnsmasq restart
+
+
+# reset ipsec config dns
+sed -ri "s/8.8.8.8 8.8.4.4/PUBLIC_IP/g" /etc/ipsec.conf
+sed -ri "s/8.8.8.8/PUBLIC_IP/g" /etc/ppp/options.xl2tpd
+sed -ri "s/8.8.4.4/PUBLIC_IP/g" /etc/ppp/options.xl2tpd
+
+service ipsec restart
+service xl2tpd restart
+
+iptables -I INPUT 5 -i eth0 -p tcp --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -I INPUT 5 -i eth0 -p udp --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+
+iptables --line -vnL
+
+service iptables save
+
+wget -O /etc/dnsmasq.hosts http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
+
+mkdir -p /usr/local/dnsmasq
+vi /usr/local/dnsmasq/block-sites-update.sh
+#!/bin/bash
+echo "begin update"
+wget -O /etc/dnsmasq.hosts http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts
+service dnsmasq restart
+echo "finish update"
+
+chmod +x /usr/local/dnsmasq/block-sites-update.sh
+
+# schedule every day execute
+crontab -e
+0 20 * * * /bin/sh /usr/local/dnsmasq/block-sites-update.sh
