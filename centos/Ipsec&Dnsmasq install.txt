@@ -58,3 +58,85 @@ chmod +x /usr/local/dnsmasq/block-sites-update.sh
 # schedule every day execute
 crontab -e
 0 20 * * * /bin/sh /usr/local/dnsmasq/block-sites-update.sh
+
+
+PUBLIC_IP=$(dig @resolver1.opendns.com -t A -4 myip.opendns.com +short)
+
+# append ikev config to ipsec
+cat >> /etc/ipsec.conf <<EOF
+
+conn ikev2-cp
+  left=%defaultroute
+  leftcert=$PUBLIC_IP
+  leftid=@$PUBLIC_IP
+  leftsendcert=always
+  leftsubnet=0.0.0.0/0
+  leftrsasigkey=%cert
+  right=%any
+  rightid=%fromcert
+  rightaddresspool=192.168.43.10-192.168.43.250
+  rightca=%same
+  rightrsasigkey=%cert
+  narrowing=yes
+  dpddelay=30
+  dpdtimeout=120
+  dpdaction=clear
+  auto=add
+  ikev2=insist
+  rekey=no
+  pfs=no
+  ike-frag=yes
+  ike=aes256-sha2,aes128-sha2,aes256-sha1,aes128-sha1,aes256-sha2;modp1024,aes128-sha1;modp1024
+  phase2alg=aes_gcm-null,aes128-sha1,aes256-sha1,aes128-sha2,aes256-sha2
+EOF
+
+cat >> /etc/ipsec.conf <<EOF
+  modecfgdns="$PUBLIC_IP"
+  encapsulation=yes
+  mobike=no
+EOF
+
+# CA Server
+certutil -z <(head -c 1024 /dev/urandom) \
+  -S -c "IKEv2 VPN CA" -n "$PUBLIC_IP" \
+  -s "O=IKEv2 VPN,CN=$PUBLIC_IP" \
+  -k rsa -g 4096 -v 120 \
+  -d sql:/etc/ipsec.d -t ",," \
+  --keyUsage digitalSignature,keyEncipherment \
+  --extKeyUsage serverAuth \
+  --extSAN "ip:$PUBLIC_IP,dns:$PUBLIC_IP"
+
+# generate cient
+certutil -z <(head -c 1024 /dev/urandom) \
+  -S -c "IKEv2 VPN CA" -n "$PUBLIC_IP" \
+  -s "O=IKEv2 VPN,CN=$PUBLIC_IP" \
+  -k rsa -g 4096 -v 120 \
+  -d sql:/etc/ipsec.d -t ",," \
+  --keyUsage digitalSignature,keyEncipherment \
+  --extKeyUsage serverAuth \
+  --extSAN "ip:$PUBLIC_IP,dns:$PUBLIC_IP"
+  
+pk12util -o vpnclient.p12 -n "$PUBLIC_IP" -d sql:/etc/ipsec.d
+
+Enter password for PKCS12 file:
+Re-enter password:
+pk12util: PKCS12 EXPORT SUCCESSFUL
+
+# show vpn client info
+certutil -L -d sql:/etc/ipsec.d
+
+Certificate Nickname                               Trust Attributes
+                                                   SSL,S/MIME,JAR/XPI
+
+IKEv2 VPN CA                                       CTu,u,u
+($PUBLIC_IP)                                       u,u,u
+vpnclient                                          u,u,u
+
+service ipsec restart
+
+# login log
+cat /var/log/secure 
+
+# Upgrade Libreswan
+# CentOS & RHEL 
+wget https://git.io/vpnupgrade-centos -O vpnupgrade.sh
