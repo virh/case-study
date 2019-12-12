@@ -7,6 +7,10 @@ from datetime import date
 
 def main(argv):
 	baseDir = ''
+	currDir = '.'
+	logpath = currDir + '/logs/'
+	if not os.path.exists(logpath):
+		os.makedirs(logpath)	
 
 	try:
 		opts, args = getopt.getopt(argv,":h:",["dir="])
@@ -36,9 +40,9 @@ def main(argv):
 	previousWeek = int(year + str(previousWeekNumber))
 	#print('Week number ', currentWeek, previousWeek)
 	
-	f = open(os.path.join(basepath, "backlog-status-checklog.txt"),"w+")
+	f = open(os.path.join(logpath, "backlog-status-checklog.txt"),"w+")
 	try:
-		excludeFile = open(os.path.join(basepath, "exclude.txt"))
+		excludeFile = open(os.path.join(currDir, "exclude.txt"))
 		excludeContent = excludeFiles(excludeFile)
 	except IOError:
 		excludeContent = []
@@ -75,13 +79,16 @@ def main(argv):
 			#print('Update file[',filename,'] begin...')
 			statusIndex = -1
 			taskIndex = -1
+			targetIndex = -1
 			previousWeekIndex = -1
 			currentWeekIndex = -1
 			for col in range(1, colCount+1):
-				if (taskIndex>-1 and statusIndex>-1 and previousWeekIndex>-1 and currentWeekIndex>-1):
+				if (taskIndex>-1 and targetIndex>-1 and statusIndex>-1 and previousWeekIndex>-1 and currentWeekIndex>-1):
 					break
 				if (taskIndex==-1 and ws.Cells(1, col).value=='Task Description'):
-					taskIndex = col							
+					taskIndex = col				
+				if (targetIndex==-1 and ws.Cells(1, col).value=='Target Sprint'):
+					targetIndex = col										
 				if (statusIndex==-1 and ws.Cells(1, col).value=='Status'):
 					statusIndex = col
 				if (previousWeekIndex==-1 and ws.Cells(3, col).value and int(ws.Cells(3, col).value)==previousWeek):
@@ -108,6 +115,28 @@ def main(argv):
 					if (fillFlag):
 						ws.Cells(row, statusIndex).Interior.color = rgb_to_hex((255, 0, 0))
 						ws.Cells(row, statusIndex).value = 'Open'
+					else:
+						ws.Cells(row, statusIndex).Interior.color = rgb_to_hex((255, 255, 255))
+
+				if(ws.Cells(row, targetIndex).value is None):
+					fillFlag = True
+					tempPreviousIndex = statusIndex+1
+					sprintIndex = ""
+					while (tempPreviousIndex<=currentWeekIndex):
+						if(ws.Cells(2, tempPreviousIndex).value is not None):
+							sprintIndex = ws.Cells(2, tempPreviousIndex).value
+						currentValue = ws.Cells(row, tempPreviousIndex).value
+						if(currentValue is not None):
+							sprintIndex = sprintIndex.replace("Sprint", today.strftime('%y'))
+							fillFlag = False
+							break
+						tempPreviousIndex = tempPreviousIndex+2
+
+					if (fillFlag):
+						ws.Cells(row, targetIndex).Interior.color = rgb_to_hex((255, 0, 0))
+					else:
+						ws.Cells(row, targetIndex).value = sprintIndex
+						ws.Cells(row, targetIndex).Interior.color = rgb_to_hex((255, 255, 255))
 
 			wb.Save()
 			wb.Close()

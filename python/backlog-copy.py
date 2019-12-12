@@ -7,6 +7,10 @@ from datetime import date
 
 def main(argv):
 	baseDir = ''
+	currDir = '.'
+	logpath = currDir + '/logs/'
+	if not os.path.exists(logpath):
+		os.makedirs(logpath)	
 
 	try:
 		opts, args = getopt.getopt(argv,":h:",["dir="])
@@ -36,9 +40,9 @@ def main(argv):
 	previousWeek = int(year + str(previousWeekNumber))
 	#print('Week number ', currentWeek, previousWeek)
 	
-	f = open(os.path.join(basepath, "updatelog.txt"),"w+")
+	f = open(os.path.join(logpath, "updatelog.txt"),"w+")
 	try:
-		excludeFile = open(os.path.join(basepath, "exclude.txt"))
+		excludeFile = open(os.path.join(currDir, "exclude.txt"))
 		excludeContent = excludeFiles(excludeFile)
 	except IOError:
 		excludeContent = []

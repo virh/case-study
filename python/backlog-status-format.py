@@ -7,6 +7,10 @@ from datetime import date
 
 def main(argv):
 	baseDir = ''
+	currDir = '.'
+	logpath = currDir + '/logs/'
+	if not os.path.exists(logpath):
+		os.makedirs(logpath)	
 
 	try:
 		opts, args = getopt.getopt(argv,":h:",["dir="])
@@ -36,9 +40,9 @@ def main(argv):
 	previousWeek = int(year + str(previousWeekNumber))
 	#print('Week number ', currentWeek, previousWeek)
 	
-	f = open(os.path.join(basepath, "backlog-status-formatlog.txt"),"w+")
+	f = open(os.path.join(logpath, "backlog-status-formatlog.txt"),"w+")
 	try:
-		excludeFile = open(os.path.join(basepath, "exclude.txt"))
+		excludeFile = open(os.path.join(currDir, "exclude.txt"))
 		excludeContent = excludeFiles(excludeFile)
 	except IOError:
 		excludeContent = []
@@ -75,13 +79,16 @@ def main(argv):
 			#print('Update file[',filename,'] begin...')
 			statusIndex = -1
 			taskIndex = -1
+			targetIndex = -1
 			previousWeekIndex = -1
 			currentWeekIndex = -1
 			for col in range(1, colCount+1):
-				if (taskIndex>-1 and statusIndex>-1 and previousWeekIndex>-1 and currentWeekIndex>-1):
+				if (taskIndex>-1 and targetIndex>-1 and statusIndex>-1 and previousWeekIndex>-1 and currentWeekIndex>-1):
 					break
 				if (taskIndex==-1 and ws.Cells(1, col).value=='Task Description'):
 					taskIndex = col					
+				if (targetIndex==-1 and ws.Cells(1, col).value=='Target Sprint'):
+					targetIndex = col							
 				if (statusIndex==-1 and ws.Cells(1, col).value=='Status'):
 					statusIndex = col
 				if (previousWeekIndex==-1 and ws.Cells(3, col).value and int(ws.Cells(3, col).value)==previousWeek):
@@ -94,6 +101,10 @@ def main(argv):
 			for row in range(5, rowCount + 1):		
 				if(not ws.Cells(row, taskIndex).value):
 					break
+				# reset target sprint
+				ws.Cells(row, targetIndex).NumberFormat='0'
+				ws.Cells(row, targetIndex).HorizontalAlignment=-4152 # right
+				ws.Cells(row, targetIndex).VerticalAlignment=-4108 # center
 				cellValue = ws.Cells(row, statusIndex).value		
 				#print('row index ', row, 'cell value', cellValue)
 				if(cellValue and str(cellValue).lower()=='closed'):

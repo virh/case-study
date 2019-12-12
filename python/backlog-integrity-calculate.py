@@ -9,35 +9,32 @@ def main(argv):
 	baseDir = ''
 	statusFile = ''
 	statusCell = ''
-	sprintArg = ''
 	currDir = '.'
 	logpath = currDir + '/logs/'
 	if not os.path.exists(logpath):
-		os.makedirs(logpath)	
+		os.makedirs(logpath)
 
 	try:
-		opts, args = getopt.getopt(argv,":h:f:s:",["dir=","sprint="])
+		opts, args = getopt.getopt(argv,":h:f:s:",["dir="])
 	except getopt.GetoptError:
-		print('report-status-calculate.py --dir=<dir> --sprint=<sprint> -f <filename> -s <sheetname>')
+		print('backlog-integrity-calculate.py --dir=<dir> -f <filename> -s <sheetname>')
 		sys.exit(2)
+	#print(opts)
 	for opt, arg in opts:
 		if opt == '-h':
-			print('report-status-calculate.py --dir=<dir> --sprint=<sprint> -f <filename> -s <sheetname>')
+			print('backlog-integrity-calculate.py --dir=<dir> -f <filename> -s <sheetname>')
 			sys.exit()
 		elif opt == '--dir':
-			baseDir = arg
-		elif opt == '--sprint':
-			sprintArg = arg			
+			baseDir = arg		
 		elif opt in ("-f"):
 			statusFile = arg
 		elif opt in ("-s"):
 			statusSheet = arg		
 	if (not statusFile) or (not statusSheet):
-		print("Usage: report-status-calculate.py --dir=<dir> --sprint=<sprint> -f <filename> -s <sheetname>")
+		print("Usage: backlog-integrity-calculate.py --dir=<dir> -f <filename> -s <sheetname>")
 		return
 	print('Status file is ', statusFile)
-	print('Status sheet is ', statusSheet)			
-	print('Sprint arg is ', sprintArg)	
+	print('Status sheet is ', statusSheet)	
 	if not baseDir:
 		basepath = '.'
 	else:
@@ -56,10 +53,11 @@ def main(argv):
 	#print('Week number ', currentWeek, previousWeek)
 	#statusFile = 'update-status.xlsx'
 	#statusSheet = 'XFT Velocity'
+	updateTeams = []
 	capacityTeams = {}
 	remainTeams = {}
 	
-	f = open(os.path.join(logpath, "report-status-calculate-log.txt"),"w+")	
+	f = open(os.path.join(logpath, "backlog-integrity-calculate-log.txt"),"w+")	
 	try:
 		excludeFile = open(os.path.join(currDir, "exclude.txt"))
 		excludeContent = excludeFiles(excludeFile)
@@ -117,69 +115,22 @@ def main(argv):
 					currentWeekIndex = col
 					#print('current week index ', currentWeekIndex)
 			#previousWeekIndex=24
-			if ( not sprintArg ):
-				step = 0
-				while(ws.Cells(3, previousWeekIndex-step).value is None):
-					step = step + 1
-				sprintIndex = ws.Cells(3, previousWeekIndex-step).value
-				sprintIndex = sprintIndex.replace("Sprint", today.strftime('%y'))
-			else:
-				sprintIndex = str(sprintArg)
-			#print(sprintIndex)		
-			# store Capacity Available and Comitted
-			try:
-				ws = wb.Worksheets('Capacity')		
-			except:
-				log(f, 'Sheet name [Capacity] can not open!')	
-			#print(ws.Cells(4, 1).NumberFormat)	
-			#print(ws.Cells(4, 1).value)
-			#ws.Cells(4, 1).NumberFormat='@' | '0_'
-			ws.Cells(4, 1).value=sprintIndex
-			capacityTeams[team]=["{0:.2f}".format(ws.Cells(19, 7).value),"{0:.2f}".format(ws.Cells(19, 8).value)]
-			#ws.Cells(4, 1).value='1910'
-			#capacityTeams[team+'back']=["{0:.2f}".format(ws.Cells(19, 7).value),"{0:.2f}".format(ws.Cells(19, 8).value)]
-			#print(ws.Cells(19, 7).value)
-			#print(ws.Cells(19, 8).value)
-			#print(capacityTeams)
-			
-			# store Remain
-			try:
-				ws = wb.Worksheets('Team Backlog')		
-			except:
-				log(f, 'Sheet name [Team Backlog] can not open!')		
-			allData = ws.UsedRange
-			rowCount = allData.Rows.Count
-			colCount = allData.Columns.Count
-			statusIndex = -1
-			taskIndex = -1
-			targetIndex = -1
-			sprintColIndex = -1
-			sprintIndexStr = sprintIndex.replace(today.strftime('%y'), "Sprint", 1)
-			for col in range(1, colCount+1):
-				if (taskIndex>-1 and targetIndex>-1 and sprintColIndex>-1):
-					break
-				if (taskIndex==-1 and ws.Cells(1, col).value=='Task Description'):
-					taskIndex = col					
-				if (targetIndex==-1 and ws.Cells(1, col).value=='Target Sprint'):
-					targetIndex = col		
-				if (sprintColIndex==-1 and ws.Cells(2, col).value and str(ws.Cells(2, col).value)==sprintIndexStr):
-					sprintColIndex = col
-				#print('Spring col ', col, ws.Cells(3, col).value)
-			#print('Task index ', taskIndex)		
-			#print('Target index ', targetIndex)	
-			#print('Sprint col index ', sprintColIndex)	
-			
-			remainSum = 0
+			step = 0
+			while(ws.Cells(3, previousWeekIndex-step).value is None):
+				step = step + 1
+			sprintIndex = ws.Cells(3, previousWeekIndex-step).value
+			sprintIndex = sprintIndex.replace("Sprint", today.strftime('%y'))
+			#print(sprintIndex)
 			for row in range(5, rowCount + 1):
-				if(not ws.Cells(row, taskIndex).value):
-					break				
-				if(not ws.Cells(row, sprintColIndex+6).value):
-					continue
-				if(ws.Cells(row, targetIndex).value and int(ws.Cells(row, targetIndex).value)<=int(sprintIndex)):
-					remainSum += int(ws.Cells(row, sprintColIndex+6).value)
-			#print('Remain sum is ', remainSum)
-			remainTeams[team]=remainSum
-			#print(remainTeams)
+				if (ws.Cells(row, 1).value):
+					#print(ws.Cells(row, 1).value)
+					formatColor = ws.Cells(row, previousWeekIndex).DisplayFormat.Interior.Color
+					#print(formatColor)
+					if (formatColor==255 and str(ws.Cells(row, 2).value).lower()=='active'):
+						updateTeams.append(team)
+						log(f, team + ' name [' + ws.Cells(row, 1).value + '] found not update backlog. ')	
+						break		
+			#print(updateTeams)			
 						
 			wb.Close(False)
 			#log(f, 'Update file[' + filename + '] end...')
@@ -195,9 +146,11 @@ def main(argv):
 	except:
 			log(f, sys.exc_info()[0])
 			log(f, 'Sheet name [' + statusSheet + '] invaild!')		
-	storeCapacity(statusWb, statusWs, capacityTeams, remainTeams, sprintIndex)
-	for item in capacityTeams.keys():
-		log(f, item + ' capacity, commit and remain update success!')		
+	colIndex = fillDefaultScore(statusWb, statusWs, sprintIndex)
+	for i in range(0, len(updateTeams)): 
+		team = updateTeams[i]
+		origin = decrement(statusWb, statusWs, team, colIndex)
+		log(f, team + ' sprint ' + sprintIndex + ' origin value ' + str(origin))	
 	log(f, '=========End Status File=========')
 	statusWb.Close()
 	excel.Quit()
@@ -209,37 +162,47 @@ def log(file, message):
 	file.write('{}'.format(message))
 	file.write('\n')
 	return	
-
-def storeCapacity(wb, ws, capacityTeams, remainTeams, sprintIndex):
+	
+def decrement(wb, ws, team, colIndex):
 	allData = ws.UsedRange
 	rowCount = allData.Rows.Count
 	colCount = allData.Columns.Count
 	teamIndex = -1
 	origin = -1
+	for row in range(1, rowCount + 1):
+		if (ws.Cells(row, 1).value and str(ws.Cells(row, 1).value).lower()==str(team).lower()):
+			teamIndex = row
+			#print(team, ' rowIndex ', row)	
+			break
+		if (ws.Cells(row, 1).value is None and ws.Cells(row, 2).value is None):
+			break
+	if (teamIndex>-1):
+		scoreIndex = teamIndex+7
+		origin = ws.Cells(scoreIndex, colIndex).value
+		if (int(origin) > 0):
+			ws.Cells(scoreIndex, colIndex).value = origin-1
+			wb.Save()
+	return origin	
+
+def fillDefaultScore(wb, ws, sprintIndex):
+	allData = ws.UsedRange
+	rowCount = allData.Rows.Count
+	colCount = allData.Columns.Count
+	colIndex = -1
 	for col in range(3, colCount + 1):
 		#print(ws.Cells(1, col).value, sprintIndex)
-		if (ws.Cells(1, col).value and int(ws.Cells(1, col).value)==int(sprintIndex)):
-			sprintCol = col
+		if (int(ws.Cells(1, col).value)==int(sprintIndex)):
+			colIndex = col
 			break
-	for row in range(2, rowCount + 1):
+	#print(colIndex, sprintIndex)		
+	for row in range(1, rowCount + 1):
 		if (ws.Cells(row, 1).value):
-			teamIndex = row
-			team = ws.Cells(row, 1).value
-			capacityIndex = teamIndex
-			commitmentIndex = teamIndex+1
-			remainIndex = teamIndex+2
-			#print(capacityTeams)
-			#print(team)
-			#print(capacityTeams.get(team))
-			if (capacityTeams.get(team) is not None):
-				ws.Cells(capacityIndex, sprintCol).value = capacityTeams[team][0]
-				ws.Cells(commitmentIndex, sprintCol).value = capacityTeams[team][1]
-				#print(ws.Cells(capacityIndex, sprintCol).value)
-				#print(ws.Cells(commitmentIndex, sprintCol).value)
-			if (remainTeams.get(team) is not None):
-				ws.Cells(remainIndex, sprintCol).value = remainTeams[team]
+			if (ws.Cells(row+7, colIndex).value is None):
+				ws.Cells(row+7, colIndex).value = 3
+		if (ws.Cells(row, 1).value is None and ws.Cells(row, 2).value is None):
+			break
 	wb.Save()
-	return 
+	return colIndex
 
 def excludeFiles(file):
 	content = file.readlines()
