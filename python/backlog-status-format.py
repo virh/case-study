@@ -4,6 +4,7 @@ import win32com.client
 from win32com.client import Dispatch
 import time
 from datetime import date
+from datetime import timedelta
 
 def main(argv):
 	baseDir = ''
@@ -33,12 +34,14 @@ def main(argv):
 	excel = win32com.client.Dispatch('Excel.Application')
 	updateCount = 0
 	today = date.today()
+	lastWeekDay = today - timedelta(days=7)
 	currentWeekNumber = today.isocalendar()[1]
-	previousWeekNumber = currentWeekNumber-1
-	year = today.strftime('%y')
-	currentWeek = int(year + str(currentWeekNumber))
-	previousWeek = int(year + str(previousWeekNumber))
-	#print('Week number ', currentWeek, previousWeek)
+	previousWeekNumber = lastWeekDay.isocalendar()[1] 
+	year = str(today.isocalendar()[0])[-2:]
+	lastWeekYear = str(lastWeekDay.isocalendar()[0])[-2:]
+	currentWeek = int(year + str(currentWeekNumber).zfill(2))
+	previousWeek = int(lastWeekYear + str(previousWeekNumber).zfill(2))
+	#print('Week number ', today.isocalendar(), currentWeek, previousWeek)
 	
 	f = open(os.path.join(logpath, "backlog-status-formatlog.txt"),"w+")
 	try:
@@ -98,9 +101,14 @@ def main(argv):
 					currentWeekIndex = col
 					#print('current week index ', currentWeekIndex)
 			#print('Week index ', ws.Cells(81, 73).value)	
-			for row in range(5, rowCount + 1):		
+			row = 5
+			while row < rowCount + 1:
 				if(not ws.Cells(row, taskIndex).value):
-					break
+					taskRangeCell = 'G' + str(int(row)) + ':G' + str(rowCount)
+					if(excel.WorksheetFunction.CountA(ws.Range(taskRangeCell))):
+						row = row + excel.WorksheetFunction.Match("*", ws.Range(taskRangeCell), 0) - 1
+					else:
+						break
 				# reset target sprint
 				ws.Cells(row, targetIndex).NumberFormat='0'
 				ws.Cells(row, targetIndex).HorizontalAlignment=-4152 # right
@@ -117,7 +125,8 @@ def main(argv):
 				else:
 					ws.Cells(row, statusIndex).value='Open'
 					log(f, 'row index ' + str(row) + '[None]' + ' status format invaild rename to [Open]')
-
+				row += 1
+				
 			wb.Save()
 			wb.Close()
 			#log(f, 'Update file[' + filename + '] end...')

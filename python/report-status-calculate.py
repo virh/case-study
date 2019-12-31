@@ -4,6 +4,7 @@ import win32com.client
 from win32com.client import Dispatch
 import time
 from datetime import date
+from datetime import timedelta
 
 def main(argv):
 	baseDir = ''
@@ -48,12 +49,14 @@ def main(argv):
 	#excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
 	readCount = 0
 	today = date.today()
+	lastWeekDay = today - timedelta(days=7)
 	currentWeekNumber = today.isocalendar()[1]
-	previousWeekNumber = currentWeekNumber-1
-	year = today.strftime('%y')
-	currentWeek = int(year + str(currentWeekNumber))
-	previousWeek = int(year + str(previousWeekNumber))
-	#print('Week number ', currentWeek, previousWeek)
+	previousWeekNumber = lastWeekDay.isocalendar()[1] 
+	year = str(today.isocalendar()[0])[-2:]
+	lastWeekYear = str(lastWeekDay.isocalendar()[0])[-2:]
+	currentWeek = int(year + str(currentWeekNumber).zfill(2))
+	previousWeek = int(lastWeekYear + str(previousWeekNumber).zfill(2))
+	#print('Week number ', today.isocalendar(), currentWeek, previousWeek)
 	#statusFile = 'update-status.xlsx'
 	#statusSheet = 'XFT Velocity'
 	capacityTeams = {}

@@ -68,8 +68,11 @@ def main(argv):
 			colCount = allData.Columns.Count
 			#print('Number of columns used in sheet : ',colCount)
 			
-			if(ws.AutoFilter.Filters(10).On):
+			#print(ws.AutoFilter.Filters(10).On)
+			try:
 				ws.UsedRange.AutoFilter(10,'=Open')
+			except:
+				log(f, 'File[' + filename + '] filter format error!')
 
 			wb.Save()
 			wb.Close()

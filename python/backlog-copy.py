@@ -4,6 +4,7 @@ import win32com.client
 from win32com.client import Dispatch
 import time
 from datetime import date
+from datetime import timedelta
 
 def main(argv):
 	baseDir = ''
@@ -33,14 +34,16 @@ def main(argv):
 	excel = win32com.client.Dispatch('Excel.Application')
 	updateCount = 0
 	today = date.today()
+	lastWeekDay = today - timedelta(days=7)
 	currentWeekNumber = today.isocalendar()[1]
-	previousWeekNumber = currentWeekNumber-1
-	year = today.strftime('%y')
-	currentWeek = int(year + str(currentWeekNumber))
-	previousWeek = int(year + str(previousWeekNumber))
-	#print('Week number ', currentWeek, previousWeek)
+	previousWeekNumber = lastWeekDay.isocalendar()[1] 
+	year = str(today.isocalendar()[0])[-2:]
+	lastWeekYear = str(lastWeekDay.isocalendar()[0])[-2:]
+	currentWeek = int(year + str(currentWeekNumber).zfill(2))
+	previousWeek = int(lastWeekYear + str(previousWeekNumber).zfill(2))
+	#print('Week number ', today.isocalendar(), currentWeek, previousWeek)
 	
-	f = open(os.path.join(logpath, "updatelog.txt"),"w+")
+	f = open(os.path.join(logpath, "backlog-copylog.txt"),"w+")
 	try:
 		excludeFile = open(os.path.join(currDir, "exclude.txt"))
 		excludeContent = excludeFiles(excludeFile)
@@ -95,9 +98,15 @@ def main(argv):
 					currentWeekIndex = col
 					#print('current week index ', currentWeekIndex)
 			#print('Week index ', ws.Cells(81, 73).value)	
-			for row in range(5, rowCount + 1):
+			row = 5
+			while row < rowCount + 1:
 				if(not ws.Cells(row, taskIndex).value):
-					break
+					taskRangeCell = 'G' + str(int(row)) + ':G' + str(rowCount)
+					#print(taskRangeCell)
+					if(excel.WorksheetFunction.CountA(ws.Range(taskRangeCell))):
+						row = row + excel.WorksheetFunction.Match("*", ws.Range(taskRangeCell), 0) - 1
+					else:
+						break
 				#print('row index ', row)
 				if(str(ws.Cells(row, statusIndex).value).lower()=='open'):
 					tempPreviousIndex = statusIndex+1
@@ -108,13 +117,19 @@ def main(argv):
 						if(not currentValue):
 							ws.Cells(row, tempPreviousIndex).value = tempPreviousValue
 							#print('update row ', row, " week index ", tempPreviousIndex)	
+							if(tempPreviousValue is not None):
+								log(f, ' '.join(str(x) for x in [int(ws.Cells(row, 1).value),'[',ws.Cells(row, taskIndex).value,']',ws.Cells(row, taskIndex+2).value,'copy from ', int(ws.Cells(3, tempPreviousIndex-2).value), ' to ', int(ws.Cells(3, tempPreviousIndex).value), ' with Remaining hours ', int(tempPreviousValue)]))
 						else:
 							tempPreviousValue = currentValue
+					#print('previousValue value ', row, previousWeekIndex, previousWeek)		
 					previousValue = ws.Cells(row, previousWeekIndex).value
 					#print('previousValue value ', previousValue)
 					if (previousValue) and (not ws.Cells(row, currentWeekIndex).value):
 						ws.Cells(row, currentWeekIndex).value = previousValue
 						#print('cell value ', previousValue, ws.Cells(row, currentWeekIndex).value)
+						if(previousValue is not None):
+							log(f, ' '.join(str(x) for x in [int(ws.Cells(row, 1).value),'[',ws.Cells(row, taskIndex).value,']',ws.Cells(row, taskIndex+2).value,'copy from ', int(ws.Cells(3, currentWeekIndex-2).value), ' to ', int(ws.Cells(3, currentWeekIndex).value), ' with Remaining hours ', int(previousValue)]))
+				row += 1
 
 			wb.Save()
 			wb.Close()
@@ -129,7 +144,7 @@ def main(argv):
 	return
 
 def log(file, message):
-	file.write('{}'.format(message))
+	file.write('{}'.format(message.replace(u'\xa0', u' ')))
 	file.write('\n')
 	return	
 
