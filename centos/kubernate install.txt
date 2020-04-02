@@ -52,8 +52,62 @@ yum install kubeadm docker -y
 systemctl restart docker && systemctl enable docker
 systemctl restart kubelet && systemctl enable kubelet
 
+# what images should download
+kubeadm config images list --kubernetes-version=v1.18.0
+
+# print out
+k8s.gcr.io/kube-apiserver:v1.18.0
+k8s.gcr.io/kube-controller-manager:v1.18.0
+k8s.gcr.io/kube-scheduler:v1.18.0
+k8s.gcr.io/kube-proxy:v1.18.0
+k8s.gcr.io/pause:3.2
+k8s.gcr.io/etcd:3.4.3-0
+k8s.gcr.io/coredns:1.6.7
+
+# download images
+docker pull registry.cn-qingdao.aliyuncs.com/kubernetes-image/kube-controller-manager:v1.18.0
+docker pull registry.cn-qingdao.aliyuncs.com/kubernetes-image/kube-proxy:v1.18.0
+docker pull registry.cn-qingdao.aliyuncs.com/kubernetes-image/kube-apiserver:v1.18.0
+docker pull registry.cn-qingdao.aliyuncs.com/kubernetes-image/kube-scheduler:v1.18.0
+docker pull registry.cn-qingdao.aliyuncs.com/kubernetes-image/coredns:1.6.7
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/etcd:3.4.3-0
+docker pull registry.cn-qingdao.aliyuncs.com/kubernetes-image/pause:3.2
+
+# tag images
+docker tag registry.cn-qingdao.aliyuncs.com/kubernetes-image/kube-controller-manager:v1.18.0 k8s.gcr.io/kube-controller-manager:v1.18.0
+docker tag registry.cn-qingdao.aliyuncs.com/kubernetes-image/kube-proxy:v1.18.0 k8s.gcr.io/kube-proxy:v1.18.0
+docker tag registry.cn-qingdao.aliyuncs.com/kubernetes-image/kube-apiserver:v1.18.0 k8s.gcr.io/kube-apiserver:v1.18.0
+docker tag registry.cn-qingdao.aliyuncs.com/kubernetes-image/kube-scheduler:v1.18.0 k8s.gcr.io/kube-scheduler:v1.18.0
+docker tag registry.cn-qingdao.aliyuncs.com/kubernetes-image/coredns:1.6.7 k8s.gcr.io/coredns:1.6.7
+docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/etcd:3.4.3-0 k8s.gcr.io/etcd:3.4.3-0
+docker tag registry.cn-qingdao.aliyuncs.com/kubernetes-image/pause:3.2 k8s.gcr.io/pause:3.2
+
 # initial kubernate master
 kubeadm init
+
+# find join token
+kubeadm token create --print-join-command
+
+# use the cluster as root user
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+# deploy pod network to the cluster
+kubectl get nodes
+kubectl get pods --all-namespaces
+
+# install weave net
+export kubever=$(kubectl version | base64 | tr -d '\n')
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
+
+# install flannel
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+# 
+kubectl get daemonset --all-namespaces
+kubectl delete daemonset <name> --namespace=kubesystem
+kubectl delete pod PODNAME --grace-period=0 --force --namespace=kubesystem
 
 yum install -y kubelet kubeadm kubectl
 
