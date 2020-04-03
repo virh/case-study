@@ -21,6 +21,7 @@ firewall-cmd --permanent --add-port=10251/tcp
 firewall-cmd --permanent --add-port=10252/tcp
 firewall-cmd --permanent --add-port=10255/tcp
 firewall-cmd --reload
+echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 swapoff -a
 
 # google repo
@@ -104,19 +105,29 @@ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
 # install flannel
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
+# config environment pull images to worker nodes
+
 # 
 kubectl get daemonset --all-namespaces
 kubectl delete daemonset <name> --namespace=kubesystem
 kubectl delete pod PODNAME --grace-period=0 --force --namespace=kubesystem
 
+# join nodes
+kubeadm join <master>:6443 --token <token> --discovery-token-ca-cert-hash <hash>
+
+# remove nodes
+kubectl drain <node-name>
+kubectl drain <node-name> --ignore-daemonsets --delete-local-data
+kubectl delete node <node-name>
+
 yum install -y kubelet kubeadm kubectl
 
 # config cgroup drive
-docker info | grep -i cgroup
-cat /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+#docker info | grep -i cgroup
+#cat /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 # if docker and kubeadm cgroup not same should update it
-sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-systemctl daemon-reload
+#sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+#systemctl daemon-reload
 
-kubeadm init --ignore-preflight-errors=all
+#kubeadm init --ignore-preflight-errors=all
