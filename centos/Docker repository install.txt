@@ -1,0 +1,46 @@
+docker run -d -p 8081:8081 --name nexus sonatype/nexus3
+# test
+curl http://localhost:8081/
+# retrieve admin password
+docker exec -it nexus /bin/bash
+cat /nexus-data/admin.password
+
+# create repository
+
+# update exists container port map
+vi /var/lib/docker/containers/[hash_of_the_container]/hostconfig.json
+docker inspect <container_name>
+1) stop the container 
+2) stop docker service (per Tacsiazuma's comment)
+3) change the file
+4) restart your docker engine (to flush/clear config caches)
+5) start the container
+
+docker stop nexus
+systemctl stop docker
+vi /var/lib/docker/containers/[hash_of_the_container]/hostconfig.json
+# add port 8181
+# replace "PortBindings":{"8081/tcp":[{"HostIp":"","HostPort":"8081"}]} 
+# to "PortBindings":{"8081/tcp":[{"HostIp":"","HostPort":"8081"}],"8081/tcp":[{"HostIp":"","HostPort":"8081"}]}
+vi /var/lib/docker/containers/[hash_of_the_container]/config.v2.json
+# add port 8181
+# replace "ExposedPorts":{"8081/tcp":{}} 
+# to "ExposedPorts":{"8081/tcp":{},"8181/tcp":{}} 
+systemctl restart docker
+docker start nexus
+
+
+# config docker client add repository config
+vi /etc/docker/daemon.json
+{
+        "insecure-registries": ["10.0.2.128:8181"],
+        "registry-mirrors": ["http://10.0.2.128:8181"]
+}
+
+# restart client docker
+systemctl restart docker
+# verify the config after execute "docker info" will output the above config
+docker info
+
+# verify the nexus has cache the images
+docker pull mysql
