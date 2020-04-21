@@ -34,7 +34,7 @@ docker start nexus
 vi /etc/docker/daemon.json
 {
         "insecure-registries": ["10.0.2.128:8181"],
-        "registry-mirrors": ["http://10.0.2.128:8181"]
+        "registry-mirrors": ["http://10.0.2.128:8181"]docke
 }
 
 # restart client docker
