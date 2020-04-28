@@ -1,4 +1,8 @@
-docker run -d -p 8081:8081 --name nexus sonatype/nexus3
+docker volume create --name nexus-data
+docker run -d -p 8081:8081 -p 8181:8181 -p 8182:8182 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
+
+mkdir /var/local/nexus-data && chown -R 200 /var/local/nexus-data
+docker run -d  8081:8081 -p 8181:8181 -p 8182:8182 --name nexus -v /var/local/nexus-data:/nexus-data sonatype/nexus3
 # test
 curl http://localhost:8081/
 # retrieve admin password
@@ -19,22 +23,24 @@ docker inspect <container_name>
 docker stop nexus
 systemctl stop docker
 vi /var/lib/docker/containers/[hash_of_the_container]/hostconfig.json
-# add port 8181
+# add port 8181 for pull all
+# add port 8182 for push private image
 # replace "PortBindings":{"8081/tcp":[{"HostIp":"","HostPort":"8081"}]} 
-# to "PortBindings":{"8081/tcp":[{"HostIp":"","HostPort":"8081"}],"8081/tcp":[{"HostIp":"","HostPort":"8081"}]}
+# to "PortBindings":{"8081/tcp":[{"HostIp":"","HostPort":"8081"}],"8181/tcp":[{"HostIp":"","HostPort":"8181"}],"8182/tcp":[{"HostIp":"","HostPort":"8182"}]}
 vi /var/lib/docker/containers/[hash_of_the_container]/config.v2.json
-# add port 8181
+# add port 8181 fro pull all
+# add port 8182 for push private image
 # replace "ExposedPorts":{"8081/tcp":{}} 
-# to "ExposedPorts":{"8081/tcp":{},"8181/tcp":{}} 
+# to "ExposedPorts":{"8081/tcp":{},"8181/tcp":{},"8182/tcp":{}} 
 systemctl restart docker
 docker start nexus
 
 
 # config docker client add repository config
-vi /etc/docker/daemon.json
+vi /etc/docker/daemon.json 
 {
-        "insecure-registries": ["10.0.2.128:8181"],
-        "registry-mirrors": ["http://10.0.2.128:8181"]docke
+        "insecure-registries": ["10.0.2.128:8181","10.0.2.128:8182"],
+        "registry-mirrors": ["http://10.0.2.128:8181"]
 }
 
 # restart client docker
@@ -44,3 +50,14 @@ docker info
 
 # verify the nexus has cache the images
 docker pull mysql
+
+# push image
+docker tag your-own-image:1 10.0.2.128:8182/your-own-image:1
+docker push 10.0.2.128:8182/your-own-image:1
+
+# limit pull and push thread
+vi /etc/docker/daemon.json 
+{
+    "max-concurrent-uploads": 1,
+    "max-concurrent-downloads": 1
+}
