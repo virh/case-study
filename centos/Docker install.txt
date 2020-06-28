@@ -24,3 +24,6 @@ sudo systemctl start docker
 sudo docker run hello-world
 
 systemctl enable docker.service
+
+# config container always restart
+docker update --restart=always <container-name>

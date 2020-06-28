@@ -2,7 +2,7 @@ docker volume create --name nexus-data
 docker run -d -p 8081:8081 -p 8181:8181 -p 8182:8182 --name nexus -v nexus-data:/nexus-data sonatype/nexus3
 
 mkdir /var/local/nexus-data && chown -R 200 /var/local/nexus-data
-docker run -d  8081:8081 -p 8181:8181 -p 8182:8182 --name nexus -v /var/local/nexus-data:/nexus-data sonatype/nexus3
+docker run -d -p 8081:8081 -p 8181:8181 -p 8182:8182 --name nexus -v /var/local/nexus-data:/nexus-data sonatype/nexus3
 # test
 curl http://localhost:8081/
 # retrieve admin password
