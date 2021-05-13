@@ -257,3 +257,15 @@ sysbench /usr/share/sysbench/oltp_insert.lua --mysql-user='msandbox' --mysql-pas
 
 # example
 sysbench /usr/share/sysbench/oltp_read_only.lua --threads=4 --mysql-host=127.0.0.1 --mysql-user='msandbox' --mysql-password='msandbox' --mysql-port=3306 --tables=10 --table-size=1000000 prepare
+
+
+###########docker##################
+mkdri data
+docker run -v "$PWD/data":/var/lib/mysql --name test-mysql -p 3307:3306 -p 33070:33060 -e MYSQL_ROOT_PASSWORD=xxxxx -d mysql:8.0.16
+docker exec -it test-mysql /bin/bash
+mysql -u root -p
+ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '123456';
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123456';
+FLUSH PRIVILEGES;
+SELECT Host, User, plugin from user;
+docker exec -i test-mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" $DATABASE' < /some/path/on/your/host/all-databases.sql
