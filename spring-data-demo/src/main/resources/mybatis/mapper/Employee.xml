@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ranhfun.data.mybatisdemo.mapper.EmployeeMapper" >
+    <resultMap id="BaseResultMap" type="com.ranhfun.data.mybatisdemo.model.Employee" >
+        <id column="id" property="id" jdbcType="BIGINT" />
+        <result column="first_name" property="firstName" jdbcType="VARCHAR" />
+        <result column="last_name" property="lastName" jdbcType="VARCHAR" />
+        <result column="email_address" property="emailId" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        id, first_name, last_name, email_address
+    </sql>
+
+    <select id="findAll" resultMap="BaseResultMap"  >
+       SELECT 
+       <include refid="Base_Column_List" />
+       FROM employees
+    </select>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="BaseResultMap" >
+        SELECT 
+       <include refid="Base_Column_List" />
+       FROM employees
+       WHERE id = #{id}
+    </select>
+
+    <delete id="deleteById" parameterType="java.lang.Long" >
+       DELETE FROM
+             employees 
+       WHERE 
+             id = #{id}
+    </delete>
+
+    <insert id="insert" parameterType="com.ranhfun.data.mybatisdemo.model.Employee" >
+       INSERT INTO 
+            employees
+            (id, first_name, last_name, email_address) 
+        VALUES
+            (#{id}, #{firstName}, #{lastName}, #{emailId})
+    </insert>
+
+    <update id="update" parameterType="com.ranhfun.data.mybatisdemo.model.Employee" >
+       UPDATE 
+            employees 
+       SET 
+        <if test="firstName != null">first_name = #{firstName},</if>
+        <if test="lastName != null">last_name = #{lastName},</if>
+       email_address = #{emailId}
+       WHERE 
+            id = #{id}
+    </update>
+
+    <delete id="deleteAll">
+       DELETE FROM
+             employees 
+    </delete>
+
+</mapper>
